@@ -6,42 +6,6 @@ author: eddiewould
 layout: post
 guid: https://eddiewould.com/?p=2216
 permalink: /2020/11/13/which-array-item-failed-deserialization-system-text-json/
-ocean_gallery_link_images:
-  - 'off'
-ocean_sidebar:
-  - "0"
-ocean_second_sidebar:
-  - "0"
-ocean_disable_margins:
-  - enable
-ocean_display_top_bar:
-  - default
-ocean_display_header:
-  - default
-ocean_center_header_left_menu:
-  - "0"
-ocean_custom_header_template:
-  - "0"
-ocean_header_custom_menu:
-  - "0"
-ocean_menu_typo_font_family:
-  - "0"
-ocean_disable_title:
-  - default
-ocean_disable_heading:
-  - default
-ocean_disable_breadcrumbs:
-  - default
-ocean_display_footer_widgets:
-  - default
-ocean_display_footer_bottom:
-  - default
-ocean_custom_footer_template:
-  - "0"
-ocean_link_format_target:
-  - self
-ocean_quote_format_link:
-  - post
 spay_email:
   - ""
 categories:
