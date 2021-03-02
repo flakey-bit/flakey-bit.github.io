@@ -9,19 +9,22 @@
   $plaintext: $alto !default;
   $string: $chelsea-cucumber !default;
   $literal: $chelsea-cucumber !default;
-  $keyword: $bouquet !default;
+  $keyword: $vscode-medium-blue !default;
   $error-foreground: $cod-grey !default;
   $error-background: $apple-blossom !default;
-  $comment: $grey !default;
+  $comment: $vscode-xmas-green !default;
   $preprocessor: $rajah !default;
-  $name-space: $rajah !default;
+  $name-space: $vscode-snifter !default;
   $name-attribute: $hippie-blue !default;
   $operator: $rajah !default;
-  $keyword-type: $raw-sienna !default;
+  $keyword-type: $vscode-light-blue !default;
   $regex: $gulf-stream !default;
   $string-escape: $potters-clay !default;
   $deleted: $apple-blossom !default;
   $header: $hippie-blue !default;
+
+  $method-name: $vscode-racing-yellow !default;
+  $variable-name: $vscode-light-blue;
 
   color: $plaintext;
 
@@ -71,7 +74,7 @@
   .si, .se {
     color: $string-escape;
   }
-  .nt, .nn,  .nc, .no{
+  .nt, .nn,  .nc, .no {
     color: $name-space;
   }
   .na {
@@ -82,5 +85,13 @@
   }
   .ss {
     color: $string;
+  }
+
+  .nf {
+    color: $method-name;
+  }
+
+  .n {
+    color: $variable-name;
   }
 }
