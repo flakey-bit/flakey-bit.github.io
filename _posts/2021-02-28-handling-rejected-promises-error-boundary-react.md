@@ -175,7 +175,7 @@ I'd argue it's best practice to ensure all Promise rejections are handled and *t
 ### Solution
 With some modifications, we can handle (otherwise unhandled) promise rejections (globally) and plumb them through to our `ErrorBoundary`.
 
-When our `ErrorBoundary` mounts/unmounts, it registers/unregisters (respectively) an event handler for promise rejection. 
+When our `ErrorBoundary` mounts/unmounts, it registers/unregisters (respectively) an event handler for promise rejection - the [unhandledrejection](https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event) event.
 
 The event handler takes the rejection reason and uses it to update the state for the `ErrorBoundary`.
 
