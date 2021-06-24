@@ -14,7 +14,7 @@
 /**************/
 
 html {
-  font-size: 100%;
+  font-size: 110%;
 }
 
 body {
@@ -28,7 +28,7 @@ body {
 
 .container {
   margin: 0 auto;
-  max-width: 740px;
+  max-width: 1200px;
   padding: 0 10px;
   width: 100%;
 }
@@ -88,14 +88,14 @@ ol {
 }
 
 ol ul, ul ol, ul ul, ol ol {
-  margin: 0;
+  margin: 10px 0;
 }
 
 ul {
-  li { 
-    margin-bottom: 0.3em; 
+  li {
+    margin-bottom: 0.3em;
   }
-} 
+}
 
 ul ul, ol ul {
   list-style-type: circle;
