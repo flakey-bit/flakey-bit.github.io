@@ -12,17 +12,34 @@ categories:
 
 First post in a series covering practical functional-programming ideas for everyday LoB application developers
 
-I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post (series?) will concentrate the ideas from the book that _I_ found most valuable, as well as some ideas from other sources.
+I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post (series?) will concentrate the ideas from the book that _I_ found most valuable, as well as some ideas from other sources. I don't claim to be an expert (in fact, I'm very much still a beginner myself) - but maybe that will make some of these concepts easier to understand? 
 
 ## Introduction
-
 You've probably heard of functional programming (FP) before, but perhaps you've been put off by complicated geeky terms like "Lambda Calculus", "Algebraic Data Type" or the dreaded m-word (...Monad 😱). 
 
 <figure class="wp-block-image size-large"><img src="/images/posts/practical-fp-part-1/monad-monad-monad.png"/></figure>
 
 Yes, the ideas are rooted in mathematics however there's still really valuable stuff you can draw on without paying too much attention to the theory. I'll try and present what I think are the most useful ideas.
 
-What is FP, in a nutshell? 
+### What is FP, in a nutshell? 
+To simplify (to the extreme) it's a style of programming where the application as a whole is composed of nested function calls (the return value from a function is passed-in as the input to another function and so on). In addition, we treat functions as another type of data that can be passed around just like other data types (strings, numbers, structs etc).
+
+If you're a C# programmer, you probably do this all the time in LINQ without thinking:
+
+```csharp
+var numbers = Enumerable.Range(1, 10);
+Func<int, bool> isEven = theNumber => theNumber % 2 == 0; // Create a function with the signature string → bool
+var evenNumbers = numbers.Where(isEven);                  // Invoke the LINQ Where method, passing the function in as an argument (the predicate)
+```
+
+#### What are some of the core concepts from FP?
+
+
+
+One of the core concepts is that of referential transparency. 
+
+
+
 
 What is it, in a nutshell?
 pure functions
