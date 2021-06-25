@@ -10,7 +10,7 @@ categories:
   - Uncategorized
 ---
 
-First post in a series covering practical functional-programming ideas for everyday LoB application developers
+First post in a series covering practical functional-programming ideas for everyday LoB application developers.
 
 I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post (series?) will concentrate the ideas from the book that _I_ found most valuable, as well as some ideas from other sources. I don't claim to be an expert (in fact, I'm very much still a beginner myself) - but maybe that will make some of these concepts easier to understand? 
 
@@ -22,7 +22,7 @@ You've probably heard of functional programming (FP) before, but perhaps you've 
 Yes, the ideas are rooted in mathematics however there's still really valuable stuff you can draw on without paying too much attention to the theory. I'll try and present what I think are the most useful ideas.
 
 ### What is FP, in a nutshell? 
-To simplify (to the extreme) it's a style of programming where the application as a whole is composed of nested function calls (the return value from a function is passed-in as the input to another function and so on). In addition, we treat functions as another type of data that can be passed around just like other data types (strings, numbers, structs etc).
+To simplify (to the extreme) it's a style of programming where the application as a whole is composed of nested function calls (the return value from a function is passed-in as the input to another function and so on). In addition, we treat functions as "just another type of data" - functions can be *passed around* just like other data types (strings, numbers, structs etc).
 
 If you're a C# programmer, you probably do this all the time in LINQ without thinking:
 
@@ -32,11 +32,16 @@ Func<int, bool> isEven = theNumber => theNumber % 2 == 0; // Create a function w
 var evenNumbers = numbers.Where(isEven);                  // Invoke the LINQ Where method, passing the function in as an argument (the predicate)
 ```
 
-#### What are some of the core concepts from FP?
+In the object-oriented world, our building-blocks are object instances where the object instance encapsulates both behaviour and state (data) _together_. We call methods *on* these objects to change the object's internal state, perform computations or trigger side-effects. The methods are functions that are _bound_ to a given instance. In addition to any parameters supplied to the method, the method can also utilize (and change!) field values present on the object instance to which it is bound.
 
+By way of contrast, in the functional-programming world our building blocks are functions. These functions are not bound to an object instance so all they have to work with is the parameters they were supplied. There is no internal state they can change. These functions correspond to `static` methods in C#. 
 
+### What are some of the core concepts from FP?
 
-One of the core concepts is that of referential transparency. 
+#### Referential transparency
+A function call is referentially transparent if you can replace the function call with the pre-computed result of that function without changing behaviour.
+
+For example a function that computes the MD5 hash of a given input string is referentially transparent as you can replace the function call with the pre-computed MD5 hash. As a counter-example, a function that 
 
 
 
