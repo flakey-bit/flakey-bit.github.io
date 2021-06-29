@@ -10,7 +10,7 @@ categories:
   - Uncategorized
 ---
 
-First post in a series covering practical functional-programming ideas for everyday LoB application developers.
+Post introducing functional-programming ideas that can be applied to every-day LoB application development.
 
 I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post (series?) will concentrate the ideas from the book that _I_ found most valuable, as well as some ideas from other sources. I don't claim to be an expert (in fact, I'm very much still a beginner myself) - but maybe that will make some of these concepts easier to understand? 
 
@@ -22,9 +22,28 @@ You've probably heard of functional programming (FP) before, but perhaps you've 
 Yes, the ideas are rooted in mathematics however there's still really valuable stuff you can draw on without paying too much attention to the theory. I'll try and present what I think are the most useful ideas.
 
 ### What is FP, in a nutshell? 
-To simplify (to the extreme) it's a style of programming where the application as a whole is composed of nested function calls (the return value from a function is passed-in as the input to another function and so on). In addition, we treat functions as "just another type of data" - functions can be *passed around* just like other data types (strings, numbers, structs etc).
+A bit of a cop-out, but I'll start by contrasting functional programming (FP) with object-oriented (OO) programming - as I assume my readers are familar with object-oriented code.
 
-If you're a C# programmer, you probably do this all the time in LINQ without thinking:
+In the object-oriented world, our basic building-blocks (that we compose our applications from) are _object instances_. An object instance encapsulates both behaviour _and_ state (data) _together_. We call methods *on* such objects to 
+* Modify the object's internal state
+* Perform computations or to 
+* Trigger side-effects. 
+
+These methods are functions that are _bound_ to a given instance - that is to say, in addition to any parameters explictly supplied to the method, the method can also utilize (and modify!) fields on the object instance to which the method belongs.
+
+By way of contrast, in the functional-programming world our building blocks are _functions_. These functions are (unlike methods) not bound to any object instance - all they have to work with is the parameters they were explicitly supplied. For C# programmers - an unbound function corresponds to a `static` method. 
+
+In the object-oriented world, we frequently encounter methods that
+* Accept objects (not just primitive values) as parameters
+* Return an object (rather than a primitive value)
+
+There is a symmetry in the functional-programming world - we have functions that
+* Accept other functions (not just primitive values) as parameters
+* Return a function (rather than a primitive value)
+
+Such functions are known as Higher order Functions (HoFs)
+
+If you're a C# programmer, you probably encounter the former type of HoF all the time - for example, in LINQ:
 
 ```csharp
 var numbers = Enumerable.Range(1, 10);
@@ -32,9 +51,8 @@ Func<int, bool> isEven = theNumber => theNumber % 2 == 0; // Create a function w
 var evenNumbers = numbers.Where(isEven);                  // Invoke the LINQ Where method, passing the function in as an argument (the predicate)
 ```
 
-In the object-oriented world, our building-blocks are object instances where the object instance encapsulates both behaviour and state (data) _together_. We call methods *on* these objects to change the object's internal state, perform computations or trigger side-effects. The methods are functions that are _bound_ to a given instance. In addition to any parameters supplied to the method, the method can also utilize (and change!) field values present on the object instance to which it is bound.
+To simplify (to the extreme) it's a style of programming where the application as a whole is composed of nested function calls (the return value from a function is passed-in as the input to another function and so on). In addition, we treat functions as "just another type of data" - functions can be *passed around* just like other data types (strings, numbers, structs etc).
 
-By way of contrast, in the functional-programming world our building blocks are functions. These functions are not bound to an object instance so all they have to work with is the parameters they were supplied. There is no internal state they can change. These functions correspond to `static` methods in C#. 
 
 ### What are some of the core concepts from FP?
 
