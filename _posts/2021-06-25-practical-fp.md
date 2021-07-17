@@ -10,28 +10,32 @@ categories:
   - Uncategorized
 ---
 
-Post introducing functional-programming ideas that can be applied to every-day LoB application development.
+Introduction to functional-programming ideas that can be applied to every-day LoB application development.
 
-I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post (series?) will concentrate the ideas from the book that _I_ found most valuable, as well as some ideas from other sources. I don't claim to be an expert (in fact, I'm very much still a beginner myself) - but maybe that will make some of these concepts easier to understand? 
+I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post concentrates on the ideas from the book that _I_ found most valuable, as well as some ideas from other sources. 
 
 ## Introduction
-You've probably heard of functional programming (FP) before, but perhaps you've been put off by complicated geeky terms like "Lambda Calculus", "Algebraic Data Type" or the dreaded m-word (...Monad 😱). 
+You've probably heard of functional programming ("FP") before, but perhaps you've been put off by complicated geeky terms like "Lambda Calculus", "Algebraic Data Type" or the dreaded m-word (...Monad 😱). 
 
 <figure class="wp-block-image size-large"><img src="/images/posts/practical-fp-part-1/monad-monad-monad.png"/></figure>
 
-Yes, the ideas are rooted in mathematics however there's still really valuable stuff you can draw on without paying too much attention to the theory. I'll try and present what I think are the most useful ideas.
+Yes, the ideas are rooted in mathematics however there's still really valuable stuff you can draw on without paying too much attention to the theory. I'll try and present what I think are the most useful ideas, without getting too bogged down.
 
 ### What is FP, in a nutshell? 
-A bit of a cop-out, but I'll start by contrasting functional programming (FP) with object-oriented (OO) programming - as I assume my readers are familar with object-oriented code.
+Admittedly a bit of a cop-out, but I'll start by contrasting functional programming (FP) with object-oriented (OO) programming - which I assume you're familiar with.
 
 In the object-oriented world, our basic building-blocks (that we compose our applications from) are _object instances_. An object instance encapsulates both behaviour _and_ state (data) _together_. We call methods *on* such objects to 
 * Modify the object's internal state
-* Perform computations or to 
-* Trigger side-effects. 
+* Perform computations
+* Trigger side-effects ("fire the missiles!") 
 
-These methods are functions that are _bound_ to a given instance - that is to say, in addition to any parameters explictly supplied to the method, the method can also utilize (and modify!) fields on the object instance to which the method belongs.
+An object method is a function that is _bound_ to a given instance - that is to say, in addition to any parameters explictly supplied to the method, the method can also utilize (and modify!) fields on the object itself.
 
-By way of contrast, in the functional-programming world our building blocks are _functions_. These functions are (unlike methods) not bound to any object instance - all they have to work with is the parameters they were explicitly supplied. For C# programmers - an unbound function corresponds to a `static` method. 
+By way of contrast, in the functional-programming world our building blocks are _functions_. Functions are not bound to an object - all they have to work with is the parameters they were explicitly supplied. 
+
+This propety makes functions easier to reason about than methods.
+
+Note for C# programmers: an unbound function corresponds to a `static` method. 
 
 In the object-oriented world, we frequently encounter methods that
 * Accept objects (not just primitive values) as parameters
@@ -41,15 +45,19 @@ There is a symmetry in the functional-programming world - we have functions that
 * Accept other functions (not just primitive values) as parameters
 * Return a function (rather than a primitive value)
 
-Such functions are known as Higher order Functions (HoFs)
+Such functions are known as Higher order Functions (HoFs). HoFs are the primary means for code-reuse in functional programming.
 
-If you're a C# programmer, you probably encounter the former type of HoF all the time - for example, in LINQ:
+For the C# programmers out there, a common application of HoFs can be found in LINQ:
 
 ```csharp
 var numbers = Enumerable.Range(1, 10);
 Func<int, bool> isEven = theNumber => theNumber % 2 == 0; // Create a function with the signature string → bool
 var evenNumbers = numbers.Where(isEven);                  // Invoke the LINQ Where method, passing the function in as an argument (the predicate)
 ```
+
+By allowing the caller to pass a predicate function (e.g. 'isEven') to the `Where` method, the designers of LINQ have enabled significant extensibility - compared with trying to anticipiate the filtering operations that might be needed.
+
+
 
 To simplify (to the extreme) it's a style of programming where the application as a whole is composed of nested function calls (the return value from a function is passed-in as the input to another function and so on). In addition, we treat functions as "just another type of data" - functions can be *passed around* just like other data types (strings, numbers, structs etc).
 
@@ -91,7 +99,7 @@ Topics:
 * Functions as data
 * Pure functions
 *   Referential Transparency, Side effect, 
-* Opinion: Recoverable (unchecked) exceptions are evil. Out of memory, out of disk space, assertion exception
+* Opinion: Recoverable (unchecked) exceptions for (flow control) are evil. Out of memory, out of disk space, assertion exception
 * The problem with null return values. Actually it's just a special case of the general problem of code might not handle all possible return values.
 * Inverting control to get compile-time safety (basically, you can't get at the result unless you promise to deal with or at least acknowledge the edge cases) 
 * Option aka Maybe
