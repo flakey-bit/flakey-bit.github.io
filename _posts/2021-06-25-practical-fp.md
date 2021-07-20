@@ -31,9 +31,7 @@ In the object-oriented world, our basic building-blocks (that we compose our app
 
 An object method is a function that is _bound_ to a given instance - that is to say, in addition to any parameters explictly supplied to the method, the method can also utilize (and modify!) fields on the object itself.
 
-By way of contrast, in the functional-programming world our building blocks are _functions_. Functions are not bound to an object - all they have to work with is the parameters they were explicitly supplied. 
-
-This propety makes functions easier to reason about than methods.
+By way of contrast, in the functional-programming world our building blocks are _functions_. Functions are not bound to an object - all they have to work with is the parameters they were explicitly supplied. This propety makes functions easier to reason about than methods (in particular, it makes modifying them easier!)
 
 Note for C# programmers: an unbound function corresponds to a `static` method. 
 
@@ -45,31 +43,46 @@ There is a symmetry in the functional-programming world - we have functions that
 * Accept other functions (not just primitive values) as parameters
 * Return a function (rather than a primitive value)
 
-Such functions are known as Higher order Functions (HoFs). HoFs are the primary means for code-reuse in functional programming.
+Such functions are known as Higher order Functions (HoFs). HoFs are the primary means for code reuse in functional programming - like the strategy pattern on steroids.
 
-For the C# programmers out there, a common application of HoFs can be found in LINQ:
+For the C# programmers out there, a common example of a HoF can be seen in LINQ:
 
 ```csharp
 var numbers = Enumerable.Range(1, 10);
-Func<int, bool> isEven = theNumber => theNumber % 2 == 0; // Create a function with the signature string → bool
-var evenNumbers = numbers.Where(isEven);                  // Invoke the LINQ Where method, passing the function in as an argument (the predicate)
+
+// Create a function with the signature string → bool
+Func<int, bool> isEven = theNumber => theNumber % 2 == 0;
+
+// Invoke the LINQ Where method, passing the function in as an argument (the predicate)
+var evenNumbers = numbers.Where(isEven);
 ```
 
-By allowing the caller to pass a predicate function (e.g. 'isEven') to the `Where` method, the designers of LINQ have enabled significant extensibility - compared with trying to anticipiate the filtering operations that might be needed.
+By allowing the caller to pass a predicate function (e.g. 'isEven') to the `Where` method, the designers of LINQ have enabled significant extensibility (rather than trying to anticipiate the filtering operations that might be needed).
 
+At this point you're probably thinking that dealing solely in terms of primitive data types and functions to operate on them would be hugely limiting - and indeed it would be! FP does use composite types, the distinction is that the types don't have _behaviour_ associated with them - they're *just data*. See the section on Algebraic Data Types. 
 
-
-To simplify (to the extreme) it's a style of programming where the application as a whole is composed of nested function calls (the return value from a function is passed-in as the input to another function and so on). In addition, we treat functions as "just another type of data" - functions can be *passed around* just like other data types (strings, numbers, structs etc).
-
+So to summarise & grossly over-simplify:
+* Functions are first-class things that we pass around like any other kind of parameter
+* We don't mush-together state and behavior
+* We build the overall behaviour by combining functions
 
 ### What are some of the core concepts from FP?
 
-#### Referential transparency
-A function call is referentially transparent if you can replace the function call with the pre-computed result of that function without changing behaviour.
+#### Pure functions
+A function call is pure if you can replace the function call with the pre-computed result *without affecting behaviour*. For a function to be pure, it must adhere to the following:
+* It's return value must be entirely derived from its input parameters
+* It must not mutate (modify) any of its inputs
+* It must not trigger any side-effects (such as writing to disk, network calls etc)
 
-For example a function that computes the MD5 hash of a given input string is referentially transparent as you can replace the function call with the pre-computed MD5 hash. As a counter-example, a function that 
+You might hear a similar term "referential transparency" - which is a little bit weaker as it allows _insignificant_ side-effects (such as writing to the console or logging). 
+
+For example, a function that computes the MD5 hash of a given input string is pure as you can replace the function call with the pre-computed MD5 hash. As a counter-example, a function that returns the current time (e.g. `DateTime.Now` is *not* pure)
 
 
+#### Isolation of side-effects
+blah blah blah
+
+How does this relate to "pure" functions?
 
 
 What is it, in a nutshell?
@@ -103,7 +116,8 @@ Topics:
 * The problem with null return values. Actually it's just a special case of the general problem of code might not handle all possible return values.
 * Inverting control to get compile-time safety (basically, you can't get at the result unless you promise to deal with or at least acknowledge the edge cases) 
 * Option aka Maybe
-* Either - and brief segue into union types vs product types 
+* Either - and brief segue into union types vs product types (algebraic data types. This post has more info: https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/). Option and Either are both examples of ADTs. Useful in business domain too - preventing invalid states.
+- https://jrsinclair.com/articles/2019/algebraic-structures-what-i-wish-someone-had-explained-about-functional-programming/
 
 Reference https://github.com/louthy/language-ext 
 
