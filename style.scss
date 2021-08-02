@@ -23,6 +23,7 @@ body {
   font-family: 'Montserrat', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: normal;
 }
 
 .container {
@@ -89,6 +90,12 @@ ol {
 ol ul, ul ol, ul ul, ol ol {
   margin: 0;
 }
+
+ul {
+  li { 
+    margin-bottom: 0.3em; 
+  }
+} 
 
 ul ul, ol ul {
   list-style-type: circle;
