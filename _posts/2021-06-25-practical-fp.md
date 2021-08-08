@@ -70,6 +70,60 @@ So to summarise (& grossly over-simplify):
 
 ### What are some of the core concepts from FP?
 
+#### Prefer "value semantics" (even for reference types)
+
+In C#, we have a dichotomy of "reference type" vs "value type"
+
+For *reference types* (e.g. objects, arrays and strings):
+* The data is stored on the heap (it could be large)
+* Variables which "contain" a reference type really only contain a *reference* to the value (i.e. memory location)
+  ```csharp
+  int[] itemsA = { 1, 2, 3 };
+  // itemsB refers to the same object in the heap as itemsA
+  int[] itemsB = itemsA;
+  // Will update itemsA[2] too, since they're the same array in the heap
+  itemsB[2] = 5;
+  ```
+* Have "reference equality" by default
+  ```csharp
+  int[] itemsA = { 1, 2, 3 };
+  int[] itemsB = { 1, 2, 3 };
+  Console.Out.WriteLine(itemsA == itemsB); // false
+  ```
+
+For *value types* (e.g. structs, most primitives):
+* The data is stored on the stack
+* Variables which "contain" a value type *actually contain* the value itself
+  ```csharp
+  int x = 5;
+  int y = x;
+  // Update x after the assignment of x to y. The update to x won't propagate to y
+  x = 6;
+  Console.Out.WriteLine(y); // 5
+  ```
+* Have "value equality"
+  ```csharp
+  Guid guidA = Guid.Parse("1698135c-da61-4f6a-b8e8-506936632a66");
+  Guid guidB = Guid.Parse("1698135c-da61-4f6a-b8e8-506936632a66");
+  Console.Out.WriteLine(guidA == guidB); // true
+  ```
+
+As mentioned previously, in FP we avoid "mushing together state and behavior" - the type *is* the data it is comprised of. Therefore, the most sensible definition of equality to use is value-based equality: If the constituent parts of two values are equal, then the two values should also be equal.
+
+When we create an object in C# by "newing up" a class, the value we get back is (by definition) a reference type and (by default) will have reference-based equality. However, it is possible to define the class in such a way that it behaves more like a value type (primarily, by overriding `operator ==()` and friends) in terms of equality.
+
+In C# 9.0, [records types](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/operators/equality-operators#record-types-equality) support the `==` and `!=` operators, automatically providing value equality semantics.
+
+#### Immutability
+
+To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values.
+
+Ties in nicely with value-semantics
+
+TODO TODO TODO
+
+
+
 #### Pure functions
 A function call is pure if you can replace the function call with the pre-computed result *without affecting behaviour*. For a function to be pure, it must adhere to the following:
 * The function return value must be *entirely* based on the input parameters it receives
@@ -90,6 +144,7 @@ NB: You might encounter a similar term "referential transparency" - which is ess
 
 Pure functions are great because:
 * They're super easy to test. You can literally treat them as a black-box "does the function do what it says on the tin?" - given these inputs, does it produce the correct output.
+  * Additionally, intermediate results from a chain of pure functions makes finding a [seam](https://www.informit.com/articles/article.aspx?p=359417&seqNum=3) trivial!
 * They make code easy to reason about. The signature of the function (inputs & output types) largely describes what the function does. Avoiding [primitive obsession](https://wiki.c2.com/?PrimitiveObsession) helps even further in this regard.
 * They facilitate parallelization. If you have an array of items to be processed and a function `processItem` which takes a single such item as an input, you can spin up lots of threads/tasks and give them a chunk of items, not needing to worry about interactions between the calls. This kind of code is extremely scalable.
 * They're easily reusable. Since the function is guaranteed not to have any unwanted side-effects (by definition!) you can reference it anywhere you need it.
@@ -130,10 +185,6 @@ One trade-off is that you often end up fetching more data than you need - fetchi
 The are of course other, more formal ways for isolating side-effects in FP (such as the "Effect" monad). But the principal is more important than the specifics of how to achieve it.
 
 It should now be clear that adopting FP is not a case of "all or nothing". You'll often find that certain parts of a program will lend themselves more to FP than others. Be practical about it rather than dogmatic, but make sure it's clear which parts are written in a functional style and which are not (to help with maintainence).
-
-#### Immutability
-
-TODO
 
 #### Idempotency
 
