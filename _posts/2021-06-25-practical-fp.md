@@ -10,7 +10,7 @@ categories:
   - Uncategorized
 ---
 
-Introduction to functional-programming ideas that can be applied to every-day LoB application development.
+An introduction to functional-programming: ideas that can be applied to every-day LoB application development.
 
 I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post concentrates on the ideas from the book that _I_ found most valuable, as well as some ideas from other sources. 
 
@@ -43,14 +43,15 @@ There is a symmetry in the functional-programming world - we have functions that
 * Accept other functions (not just primitive values) as parameters
 * Return a function (rather than a primitive value)
 
-Such functions are known as Higher order Functions (HoFs). HoFs are the primary means for code reuse in functional programming - like the strategy pattern on steroids.
+Such functions are known as _Higher order Functions_ (HoFs). HoFs are the primary means for code reuse in functional programming.
 
-For the C# programmers out there, a common example of a HoF can be seen in LINQ:
+For the C# programmers out there, an every-day example of a HoF can be found in LINQ:
 
 ```csharp
 var numbers = Enumerable.Range(1, 10);
 
 // Create a function with the signature string → bool
+// (i.e. takes a single string argument and produces a boolean return value)
 Func<int, bool> isEven = theNumber => theNumber % 2 == 0;
 
 // Invoke the LINQ Where method, passing the function in as an argument (the predicate)
@@ -59,9 +60,9 @@ var evenNumbers = numbers.Where(isEven);
 
 Because `Where` takes a function as an argument, it is a HoF. 
 
-By allowing the caller to pass a predicate function (e.g. 'isEven') to the `Where` method, the designers of LINQ have enabled significant extensibility (rather than trying to anticipate the filtering operations that might be needed).
+By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [strategy pattern](https://en.wikipedia.org/wiki/Strategy_pattern).
 
-At this point you're probably thinking that dealing solely in terms of primitive data types and functions to operate on them would be hugely limiting - and indeed it would be! FP *does* use composite types, the distinction is that the types don't have _behaviour_ associated with them - they're *just data*. I'll cover that in a bit more detail in the section "Algebraic Data Types".
+At this point you're probably thinking that dealing solely in terms of primitive data types and functions to operate on them would be hugely limiting - and indeed it would be! FP *does* use composite types, the distinction is that types don't have _behaviour_ associated with them - they're *just data*. The section "Algebraic Data Types" covers composite types.
 
 So to summarise (& grossly over-simplify):
 * Functions are first-class things that we pass around like any other kind of parameter
@@ -69,6 +70,14 @@ So to summarise (& grossly over-simplify):
 * We build the overall behaviour by combining functions
 
 ### What are some of the core concepts from FP?
+
+#### Immutability
+
+To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values.
+
+Ties in nicely with value-semantics
+
+TODO TODO TODO
 
 #### Prefer "value semantics" (even for reference types)
 
@@ -113,15 +122,6 @@ As mentioned previously, in FP we avoid "mushing together state and behavior". A
 When we create an object in C# by "newing up" a class, the value we get back is (by definition) a reference type and (by default) will have reference-based equality. However, it is possible to define the class in such a way that it behaves more like a value type (primarily, by overriding `operator ==()` and friends) in terms of equality.
 
 In C# 9.0, [records types](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/operators/equality-operators#record-types-equality) support the `==` and `!=` operators, automatically providing value equality semantics.
-
-#### Immutability
-
-To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values.
-
-Ties in nicely with value-semantics
-
-TODO TODO TODO
-
 
 
 #### Pure functions
@@ -208,6 +208,11 @@ Now that we have the core concepts of FP out of the way, let's drill into some m
 * Option aka Maybe
 * Either - and brief segue into union types vs product types (algebraic data types. This post has more info: https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/). Option and Either are both examples of ADTs. Useful in business domain too - preventing invalid states.
 - https://jrsinclair.com/articles/2019/algebraic-structures-what-i-wish-someone-had-explained-about-functional-programming/ railway-oriented-programming: https://fsharpforfunandprofit.com/rop/#slides
+
+#### Algebraic Data Types
+
+We need a section on this since we refer to it
+
 
 Reference https://github.com/louthy/language-ext 
 
