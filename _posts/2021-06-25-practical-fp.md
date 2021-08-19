@@ -76,7 +76,7 @@ In C#, we have a dichotomy of "reference type" vs "value type"
 
 For *reference types* (e.g. objects, arrays and strings):
 * The data is stored on the heap (it could be large)
-* Variables which "contain" a reference type really only contain a *reference* to the value (i.e. memory location)
+* Variables which contain a reference type really only contain a *reference* to the value (i.e. memory location)
   ```csharp
   int[] itemsA = { 1, 2, 3 };
   // itemsB refers to the same object in the heap as itemsA
@@ -84,7 +84,7 @@ For *reference types* (e.g. objects, arrays and strings):
   // Will update itemsA[2] too, since they're the same array in the heap
   itemsB[2] = 5;
   ```
-* Have "reference equality" by default
+* "Reference equality" is used by default
   ```csharp
   int[] itemsA = { 1, 2, 3 };
   int[] itemsB = { 1, 2, 3 };
@@ -92,8 +92,8 @@ For *reference types* (e.g. objects, arrays and strings):
   ```
 
 For *value types* (e.g. structs, most primitives):
-* The data is stored on the stack
-* Variables which "contain" a value type *actually contain* the value itself
+* The data is stored on the stack (value types are typically small in size)
+* Variables which contain a value type *actually contain* the value itself
   ```csharp
   int x = 5;
   int y = x;
@@ -101,14 +101,14 @@ For *value types* (e.g. structs, most primitives):
   x = 6;
   Console.Out.WriteLine(y); // 5
   ```
-* Have "value equality"
+* "Value equality" is used by default
   ```csharp
   Guid guidA = Guid.Parse("1698135c-da61-4f6a-b8e8-506936632a66");
   Guid guidB = Guid.Parse("1698135c-da61-4f6a-b8e8-506936632a66");
   Console.Out.WriteLine(guidA == guidB); // true
   ```
 
-As mentioned previously, in FP we avoid "mushing together state and behavior" - the type *is* the data it is comprised of. Therefore, the most sensible definition of equality to use is value-based equality: If the constituent parts of two values are equal, then the two values should also be equal.
+As mentioned previously, in FP we avoid "mushing together state and behavior". As a consequence of that, the type *is* the data it is comprised of. Therefore, the most sensible definition of equality to use is value-based equality: If the constituent parts of two values are equal, then the two values should also be equal.
 
 When we create an object in C# by "newing up" a class, the value we get back is (by definition) a reference type and (by default) will have reference-based equality. However, it is possible to define the class in such a way that it behaves more like a value type (primarily, by overriding `operator ==()` and friends) in terms of equality.
 
@@ -217,4 +217,7 @@ And also https://github.com/emmanueltouzery/prelude-ts
 
 > prelude-ts (previously prelude.ts) is a TypeScript library which aims to make functional programming concepts accessible and productive in TypeScript. It provides persistent immutable collections (Vector, Set, Map, Stream), and constructs such as Option, Either, Predicate and Future. 
 
-Other articles / posts: https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
+Other articles / posts: 
+
+https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
+https://cscalfani.medium.com/why-is-learning-functional-programming-so-damned-hard-bfd00202a7d1
