@@ -60,11 +60,23 @@ var evenNumbers = numbers.Where(isEven);
 
 Because `Where` takes a function as an argument, it is a HoF. 
 
-By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [strategy pattern](https://en.wikipedia.org/wiki/Strategy_pattern).
+By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [StrategyPattern](https://en.wikipedia.org/wiki/Strategy_pattern).
 
-At this point you're probably thinking that dealing solely in terms of primitive data types and functions to operate on them would be hugely limiting - and indeed it would be! FP *does* use composite types, the distinction is that types don't have _behaviour_ associated with them - they're *just data*. The section "Algebraic Data Types" covers composite types.
+At this point you're probably thinking that dealing solely in terms of primitive data types and functions to operate on them would be hugely limiting - and indeed it would be! FP *does* have composite types, the distinction is that types don't have any _behaviour_ associated with them - they're *just data*. The section "Algebraic Data Types" covers composite types in more detail. 
 
-So to summarise (& grossly over-simplify):
+It's interesting to note that in object-oriented programming, the principal of _encapsulation_ tells us to avoid creating types w/ *no behaviour* (see the [AnemicDomainModel](https://martinfowler.com/bliki/AnemicDomainModel.html) anti-pattern), whereas in functional programming, *it's the norm*. Encapsulation is a core pillar of object-oriented programming - a well-designed object
+* Offers a minimal public interface (API)
+* Hides implementation details
+* Is responsible for protecting its own internal state & invariants
+Encapsulation primarily helps with
+* Enabling code reuse
+* Reducing cognitive load for developers
+* Ensuring correct behaviour / reducing bugs 
+
+In functional programming, the same outcomes are achieved through _different_ means - primarily: immutable types, pure-functions & leaning heavily on the type system - these ideas are explored in the remainder of the post.
+
+So to summarise (& grossly over-simplify) functional programming:
+* It places a heavy emphasis on _data_ - how data flows and is transformed
 * Functions are first-class things that we pass around like any other kind of parameter
 * We don't mush-together state and behavior
 * We build the overall behaviour by combining functions
@@ -73,7 +85,8 @@ So to summarise (& grossly over-simplify):
 
 #### Immutability
 
-To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values.
+To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values. As a contrived example, in an OO program you might have a `FinancialAccount` object, with properties 
+
 
 Ties in nicely with value-semantics
 
