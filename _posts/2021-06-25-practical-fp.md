@@ -85,12 +85,71 @@ So to summarise (& grossly over-simplify) functional programming:
 
 #### Immutability
 
-To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values. As a contrived example, in an OO program you might have a `FinancialAccount` object, with properties 
+To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values. Assume our application deals with lists of people (perhaps list of 'friends'). 
+
+Under an immutable design, if you `addFriend()` you'll get back a new `FriendList` with the additional entry (the previous `FriendList` will be unchanged). Anyone with a reference to the original friend list will see the list as it was at the time.
+
+By contrast, a mutable design would simply update `FriendList` in place - anyone with a reference to the friend list would therefore observe the change.
+
+#### Logic expressed as pipelines / data transformations
+
+TODO TODO TODO: Eddie: Read https://mikhail.io/2018/07/monads-explained-in-csharp-again/ some more and work on this section
+
+In a (fictional) functional-programming fantasy-land, all programs are simply a mathematical function - they take some input, perform some computation and produce an output. Unfortunately, it's never as simple as that (we talk about side-effects in a subsequent section) - but the idea is a useful one.
+
+Of course, writing our entire program in one big function would be hugely limiting:
+* The function would be huge! (impractical to work on)
+* We'd not be able to re-use anything
+
+Instead of one big function, we break the flow into a _pipeline_ where the output from one function acts as the input for the next - and so on and so forth. Frequently, the _shape_ (type) of the data will change across the various stages of the pipeline.
+
+LINQ queries in C# are a great example of a pipeline
+
+```csharp
+decimal totalSpendAustralia = FetchOrders()
+  .Where(order => order.Customer.Country == "Australia")
+  .SelectMany(order => order.LineItems) // shape of data changes from IEnumerable<Order> to IEnumerable<LineItem>
+  .Select(lineItem => lineItem.Quantity * lineItem.Price) // shape of data changes from IEnumerable<LineItem> to IEnumerable<decimal>
+  .Sum(); // Causes pipeline to be evaluated, reducing the IEnumerable<decimal> into a single decimal value
+```
+
+As is the case with LINQ, pipelines in functional programming are often lazy - if the result of the pipeline is never used, the majority of the code in the pipeline will never run (this can be a trick for new players).
 
 
-Ties in nicely with value-semantics
+Immutability & pure functions help with us express logic as a pipeline / series of data transformations.
 
-TODO TODO TODO
+
+#### Pure functions
+A function call is pure if you can replace the function call with the pre-computed result *without affecting behaviour*. For a function to be pure, it must adhere to the following:
+* The function return value must be *entirely* based on the input parameters it receives
+  * These input parameters may only be data or other pure functions
+* It must not mutate (modify) any of its input parameters
+* It must not trigger any side-effects (such as writing to disk, network calls etc)
+
+NB: You might encounter a similar term "referential transparency" - which is essentially the same thing but a weaker guarantee as it allows _insignificant_ side-effects (such as writing to the console or logging).
+
+* A function `md5Sum` that computes the MD5 hash of a given input string is pure as you can replace the function call with the pre-computed MD5 hash for the string.
+* `DateTime.Now` (which returns the current system time in C#) and `Guid.NewGuid` (generates a new GUID) are *not* pure because each time you call them you get a different result.
+* A function `createPerson` that takes a couple of strings (`firstName` and `lastName`) as input parameters and combines them into a data-structure including a GUID `personId` (generated with `Guid.NewGuid`) is *not* pure because `createPerson` _calls_ an impure function.
+* A function `addToCart` which takes a shopping-cart data structure `cart`, a `productId` and `quantity` and updates the cart in-place is *not* pure, because it mutates the `cart` parameter.
+  * If instead `addToCart` returned a *new* cart (rather than updating in-place) then it would be pure.
+* A function `calculateRiskProfile` which transforms its input parameters, makes a HTTP `GET` web-service call and massages the response from the web-service is *not* pure because of the web-service call:
+  * the web-service is a black-box and it's implementation could change at any point in time;
+  * the web-service call goes over the network. The network could be down, the request could time-out etc. 
+
+Pure functions are great because:
+* They're super easy to test. You can literally treat them as a black-box "does the function do what it says on the tin?" - given these inputs, does it produce the correct output.
+  * Additionally, intermediate results from a chain of pure functions makes finding a [seam](https://www.informit.com/articles/article.aspx?p=359417&seqNum=3) trivial!
+* They make code easy to reason about. The signature of the function (inputs & output types) largely describes what the function does. Avoiding [primitive obsession](https://wiki.c2.com/?PrimitiveObsession) helps even further in this regard.
+* They facilitate parallelization. If you have an array of items to be processed and a function `processItem` which takes a single such item as an input, you can spin up lots of threads/tasks and give them a chunk of items, not needing to worry about interactions between the calls. This kind of code is extremely scalable.
+* They're easily reusable. Since the function is guaranteed not to have any unwanted side-effects (by definition!) you can reference it anywhere you need it.
+* The results from a pure-function can be cached indefinitely! There's no need to worry about the results becoming stale.
+
+See this [post](https://medium.com/@juntomioka/why-pure-functions-are-so-good-7f7759021c35) for more on the benefits of pure functions.
+
+Note for C# programmers: You could consider decorating methods with the `[Pure]` attribute to indicate intent to other developers.
+
+If you're a FP practitioner, _most_ of the code you write will be expressed in pure-functions - which leads us to the next section: Isolation of side-effects.
 
 #### Prefer "value semantics" (even for reference types)
 
@@ -135,39 +194,6 @@ As mentioned previously, in FP we avoid "mushing together state and behavior". A
 When we create an object in C# by "newing up" a class, the value we get back is (by definition) a reference type and (by default) will have reference-based equality. However, it is possible to define the class in such a way that it behaves more like a value type (primarily, by overriding `operator ==()` and friends) in terms of equality.
 
 In C# 9.0, [records types](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/operators/equality-operators#record-types-equality) support the `==` and `!=` operators, automatically providing value equality semantics.
-
-
-#### Pure functions
-A function call is pure if you can replace the function call with the pre-computed result *without affecting behaviour*. For a function to be pure, it must adhere to the following:
-* The function return value must be *entirely* based on the input parameters it receives
-  * These input parameters may only be data or other pure functions
-* It must not mutate (modify) any of its input parameters
-* It must not trigger any side-effects (such as writing to disk, network calls etc)
-
-NB: You might encounter a similar term "referential transparency" - which is essentially the same thing but a weaker guarantee as it allows _insignificant_ side-effects (such as writing to the console or logging).
-
-* A function `md5Sum` that computes the MD5 hash of a given input string is pure as you can replace the function call with the pre-computed MD5 hash for the string.
-* `DateTime.Now` (which returns the current system time in C#) and `Guid.NewGuid` (generates a new GUID) are *not* pure because each time you call them you get a different result.
-* A function `createPerson` that takes a couple of strings (`firstName` and `lastName`) as input parameters and combines them into a data-structure including a GUID `personId` (generated with `Guid.NewGuid`) is *not* pure because `createPerson` _calls_ an impure function.
-* A function `addToCart` which takes a shopping-cart data structure `cart`, a `productId` and `quantity` and updates the cart in-place is *not* pure, because it mutates the `cart` parameter.
-  * If instead `addToCart` returned a *new* cart (rather than updating in-place) then it would be pure.
-* A function `calculateRiskProfile` which transforms its input parameters, makes a HTTP `GET` web-service call and massages the response from the web-service is *not* pure because of the web-service call:
-  * the web-service is a black-box and it's implementation could change at any point in time;
-  * the web-service call goes over the network. The network could be down, the request could time-out etc. 
-
-Pure functions are great because:
-* They're super easy to test. You can literally treat them as a black-box "does the function do what it says on the tin?" - given these inputs, does it produce the correct output.
-  * Additionally, intermediate results from a chain of pure functions makes finding a [seam](https://www.informit.com/articles/article.aspx?p=359417&seqNum=3) trivial!
-* They make code easy to reason about. The signature of the function (inputs & output types) largely describes what the function does. Avoiding [primitive obsession](https://wiki.c2.com/?PrimitiveObsession) helps even further in this regard.
-* They facilitate parallelization. If you have an array of items to be processed and a function `processItem` which takes a single such item as an input, you can spin up lots of threads/tasks and give them a chunk of items, not needing to worry about interactions between the calls. This kind of code is extremely scalable.
-* They're easily reusable. Since the function is guaranteed not to have any unwanted side-effects (by definition!) you can reference it anywhere you need it.
-* The results from a pure-function can be cached indefinitely! There's no need to worry about the results becoming stale.
-
-See this [post](https://medium.com/@juntomioka/why-pure-functions-are-so-good-7f7759021c35) for more on the benefits of pure functions.
-
-Note for C# programmers: You could consider decorating methods with the `[Pure]` attribute to indicate intent to other developers.
-
-If you're a FP practitioner, _most_ of the code you write will be expressed in pure-functions - which leads us to the next section: Isolation of side-effects.
 
 #### Isolation of side-effects
 So you're following along, you've probably concluded
@@ -239,3 +265,4 @@ Other articles / posts:
 
 https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
 https://cscalfani.medium.com/why-is-learning-functional-programming-so-damned-hard-bfd00202a7d1
+https://mikhail.io/2018/07/monads-explained-in-csharp-again/
