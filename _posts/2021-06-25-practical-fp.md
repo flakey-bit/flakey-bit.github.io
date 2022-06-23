@@ -10,146 +10,145 @@ categories:
   - Uncategorized
 ---
 
-An introduction to functional-programming: ideas that can be applied to every-day LoB application development.
-
-I've recently read the book [Functional programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp) by Enrico Buonanno - I highly recommend reading it. This post concentrates on the ideas from the book that _I_ found most valuable, as well as some ideas from other sources. 
+An introduction to functional-programming - the low-hanging fruit 🍒🍍🍏
 
 ## Introduction
-You've probably heard of functional programming (often abbreviated as "FP") before, but perhaps you've been put off by complicated geeky terms like "Lambda Calculus", "Algebraic Data Type" or the dreaded m-word (..."Monad" 😱). 
 
-<figure class="wp-block-image size-large"><img src="/images/posts/practical-fp-part-1/monad-monad-monad.png"/></figure>
+This post is intended to be a gentle introduction to functional programming (FP) - no prior knowledge assumed.
 
-Yes, the ideas are rooted in mathematics however there's still really valuable stuff you can draw on without paying too much attention to the theory. I'll try and present what *I* think are the most useful ideas, without getting too bogged down.
+I hope that after reading it, you'll have some useful tools & techniques 🔨 in your belt that you can apply to day-to-day software development 👷. It's worth remembering that FP isn't a case of all-or-nothing - you can use _some_ of the ideas, _some of the time_.
 
-### What is FP, in a nutshell? 
+Although functional programming is rooted in mathematics 🧮, I've tried to keep the post practical - if you're interested in the _theory_, there are plenty of other posts out there.
+
+I should also mention that I'm entirely self-taught in this area (is it too late to go back to university?) - I'm very much still learning myself! 
+
+## What are the key ideas from functional programming?
+
+### Software is built by composing & reusing functions
+
 Admittedly a bit of a cop-out, but I'll start by contrasting functional programming (FP) with object-oriented (OO) programming - which I assume you're familiar with.
 
-In the object-oriented world, our basic building-blocks (that we compose our applications from) are _object instances_. An object instance encapsulates both behaviour _and_ state (data) _together_. We call methods *on* such objects to 
-* Modify the object's internal state
-* Perform computations
-* Trigger side-effects ("fire the missiles!") 
+In the object-oriented software world, our basic building-blocks 🧱 are _classes_. We use classes to create _object instances_ (or just "objects").
 
-An object method is a function that is _bound_ to a given instance - that is to say, in addition to any parameters explicitly supplied to the method, the method can also utilize (and modify!) fields on the object itself.
+An object instance combines behaviour _and_ state (data) _together_ (encapsulation). Objects expose methods which (when called)  
+* Modify the object's internal state ("increase item quantity")
+* Perform computations ("calculate order shipping cost")
+* Trigger side-effects ("fire the missiles!" 🚀) 
 
-By way of contrast, in the functional-programming world our building blocks are _functions_. Functions are not bound to an object - all they have to work with is the parameters they were explicitly supplied. This characteristic makes functions easier to safely modify than methods.
+The program as a whole can be viewed as an object [graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)) - there is a root object in the program's entrypoint
+* The root object has references to other objects (it's collaborators)
+  * Each of those objects have references to _other_ objects (_their_ collaborators)
+    * ...and so on and so forth 
 
-Note for C# programmers: an unbound function corresponds to a `static` method. 
+A request comes in from the outside world, the root object calls methods[^1] on _it's_ objects (which in turn call methods) - and thus the program springs to life. 
 
-In the object-oriented world, we frequently encounter methods that
-* Accept objects (not just primitive values) as parameters
-* Return an object (rather than a primitive value)
+By way of contrast, in the functional-programming world we don't use
+* Classes
+* Objects
+* Methods
 
-There is a symmetry in the functional-programming world - we have functions that
-* Accept other functions (not just primitive values) as parameters
-* Return a function (rather than a primitive value)
+Instead we basically just have 
+1) Lumps of data 
+2) Functions
 
-Such functions are known as _Higher order Functions_ (HoFs). HoFs are the primary means for code reuse in functional programming.
+(...and some other things like ADTs & typeclasses, which I'll ignore for now)
 
-For the C# programmers out there, an every-day example of a HoF can be found in LINQ:
+Avoiding (for the time being) a more nuanced discussion of what a [function](https://en.wikipedia.org/wiki/Function_(mathematics)) is and is not, just think of a function as an _unbound_ method (i.e. a `static` method). 
 
-```csharp
-var numbers = Enumerable.Range(1, 10);
+So unlike a method (which is bound to a particular object), a function just kind of "floats around". Because the function isn't tied to an object, it can only utilise the parameters that were passed in when it was called.
 
-// Create a function with the signature string → bool
-// (i.e. takes a single string argument and produces a boolean return value)
-Func<int, bool> isEven = theNumber => theNumber % 2 == 0;
+In the functional programming paradigm, the program as a whole can be viewed as a [computation](https://en.wikipedia.org/wiki/Model_of_computation):
+* A request to perform a calculation comes in from the outside world
+* The request is represented as a lump of data / values
+* The data is passed through a _pipeline_ of functions
+  * The output from an upstream function is used as the input to downstream functions
+  * The data may change _shape_ as it passes through the pipeline
+  * Once a result has been produced (by a function in the pipeline) that result is never modified (instead, a _new_ result is computed based on the inputs)   
+* Finally, the result of the computation pops out at the other end 🏭
 
-// Invoke the LINQ Where method, passing the function in as an argument (the predicate)
-var evenNumbers = numbers.Where(isEven);
-```
+Note that we often treat functions as data too - think along the lines of [reverse-polish-notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation) (RPN) where `calculationToPerform = [2, 4, 8, sum, mult];` represents `2 * (4 + 8)` - the functions `sum` and `mult` have been included alongside operands (numbers)
 
-Because `Where` takes a function as an argument, it is a HoF. 
+[^1]: The original proponents of object-oriented programming [didn't really intend for it to work like this](http://lists.squeakfoundation.org/pipermail/squeak-dev/1998-October/017019.html) - it was supposed to be about actors sending messages - closer to how actor-based models like [Akka.NET](https://github.com/akkadotnet) work.
 
-By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [StrategyPattern](https://en.wikipedia.org/wiki/Strategy_pattern).
+##### A quick note on encapsulation
+In the world of object-oriented programming, the principal of _encapsulation_ warns us against creating types that are "just data" (i.e. don't have behaviour) - see the [AnemicDomainModel](https://martinfowler.com/bliki/AnemicDomainModel.html).
 
-At this point you're probably thinking that dealing solely in terms of primitive data types and functions to operate on them would be hugely limiting - and indeed it would be! FP *does* have composite types, the distinction is that types don't have any _behaviour_ associated with them - they're *just data*. The section "Algebraic Data Types" covers composite types in more detail. 
-
-It's interesting to note that in object-oriented programming, the principal of _encapsulation_ tells us to avoid creating types w/ *no behaviour* (see the [AnemicDomainModel](https://martinfowler.com/bliki/AnemicDomainModel.html) anti-pattern), whereas in functional programming, *it's the norm*. Encapsulation is a core pillar of object-oriented programming - a well-designed object
+Encapsulation is a core pillar of object-oriented programming - a well-designed object
 * Offers a minimal public interface (API)
 * Hides implementation details
-* Is responsible for protecting its own internal state & invariants
+* Is responsible for protecting its own internal state & invariants 
+
 Encapsulation primarily helps with
 * Enabling code reuse
 * Reducing cognitive load for developers
-* Ensuring correct behaviour / reducing bugs 
+* Ensuring correct behaviour / reducing bugs
 
-In functional programming, the same outcomes are achieved through _different_ means - primarily: immutable types, pure-functions & leaning heavily on the type system - these ideas are explored in the remainder of the post.
+In functional programming, the same outcomes are achieved through _different_ means - primarily: 
+* Algebraic Data Types ("leaning on the type system")
+* Immutability
+* Pure-functions / isolation of side effects
+* Typeclasses
 
-So to summarise (& grossly over-simplify) functional programming:
-* It places a heavy emphasis on _data_ - how data flows and is transformed
-* Functions are first-class things that we pass around like any other kind of parameter
-* We don't mush-together state and behavior
-* We build the overall behaviour by combining functions
+some of these ideas are explored in the remainder of the post.
 
-### What are some of the core concepts from FP?
+### Data is immutable
 
-#### Immutability
+Immutability is the idea that once a value is created, _that_ (particular) value never changes; it is only possible to create _new_ values.
 
-To put it simply, immutability is the idea that once a value is created, _that_ (particular) value may never change; we may only create _new_ values. Assume our application deals with lists of people (perhaps list of 'friends'). 
+As an example, imagine some software that deals with lists of people (perhaps a 'friends list'):
 
-Under an immutable design, if you `addFriend()` you'll get back a new `FriendList` with the additional entry (the previous `FriendList` will be unchanged). Anyone with a reference to the original friend list will see the list as it was at the time.
+* Under a traditional (_mutable_) design, "adding a friend" would change the data structure **in-place** 
+  * Any code that has a reference to the friend list would _automatically_ "see" (observe) the updated list
+* Under an _immutable_ design, "adding a friend" would create a **new** data structure which is a shallow-copy of the previous friend list **with the new friend added at the end**
+  * Any code that has a reference to the original friend list (as it was prior to adding the friend) would continue to see the same list of friends
+  * Only code that has deliberately been passed the new friends list will observe the changes 
+  
+### Almost all functions are pure
+A function is "pure"[^2] if you can replace all calls to that function with pre-computed results (without affecting the program behaviour).
 
-By contrast, a mutable design would simply update `FriendList` in place - anyone with a reference to the friend list would therefore observe the change.
+For a function to be pure, it must adhere to the following:
+* The return value must depend *solely* on the function inputs
+* The function must not mutate (modify) any of its input parameters
+* The function must not trigger any side-effects (such as writing to disk, network calls etc)
+* It may only call other pure functions
 
-#### Logic expressed as pipelines / data transformations
+[^2]: You might encounter a similar term "referential transparency" - which is essentially the same thing but a weaker guarantee as it allows _insignificant_ side-effects (such as writing to the console or logging).
 
-TODO TODO TODO: Eddie: Read https://mikhail.io/2018/07/monads-explained-in-csharp-again/ some more and work on this section
-
-In a (fictional) functional-programming fantasy-land, all programs are simply a mathematical function - they take some input, perform some computation and produce an output. Unfortunately, it's never as simple as that (we talk about side-effects in a subsequent section) - but the idea is a useful one.
-
-Of course, writing our entire program in one big function would be hugely limiting:
-* The function would be huge! (impractical to work on)
-* We'd not be able to re-use anything
-
-Instead of one big function, we break the flow into a _pipeline_ where the output from one function acts as the input for the next - and so on and so forth. Frequently, the _shape_ (type) of the data will change across the various stages of the pipeline.
-
-LINQ queries in C# are a great example of a pipeline
-
-```csharp
-decimal totalSpendAustralia = FetchOrders()
-  .Where(order => order.Customer.Country == "Australia")
-  .SelectMany(order => order.LineItems) // shape of data changes from IEnumerable<Order> to IEnumerable<LineItem>
-  .Select(lineItem => lineItem.Quantity * lineItem.Price) // shape of data changes from IEnumerable<LineItem> to IEnumerable<decimal>
-  .Sum(); // Causes pipeline to be evaluated, reducing the IEnumerable<decimal> into a single decimal value
-```
-
-As is the case with LINQ, pipelines in functional programming are often lazy - if the result of the pipeline is never used, the majority of the code in the pipeline will never run (this can be a trick for new players).
-
-
-Immutability & pure functions help with us express logic as a pipeline / series of data transformations.
-
-
-#### Pure functions
-A function call is pure if you can replace the function call with the pre-computed result *without affecting behaviour*. For a function to be pure, it must adhere to the following:
-* The function return value must be *entirely* based on the input parameters it receives
-  * These input parameters may only be data or other pure functions
-* It must not mutate (modify) any of its input parameters
-* It must not trigger any side-effects (such as writing to disk, network calls etc)
-
-NB: You might encounter a similar term "referential transparency" - which is essentially the same thing but a weaker guarantee as it allows _insignificant_ side-effects (such as writing to the console or logging).
-
-* A function `md5Sum` that computes the MD5 hash of a given input string is pure as you can replace the function call with the pre-computed MD5 hash for the string.
+Some examples:
+* A function `sha1sum` that computes the SHA1 hash of a given input string is pure as you can replace the function call with the pre-computed hash for the string
 * `DateTime.Now` (which returns the current system time in C#) and `Guid.NewGuid` (generates a new GUID) are *not* pure because each time you call them you get a different result.
 * A function `createPerson` that takes a couple of strings (`firstName` and `lastName`) as input parameters and combines them into a data-structure including a GUID `personId` (generated with `Guid.NewGuid`) is *not* pure because `createPerson` _calls_ an impure function.
 * A function `addToCart` which takes a shopping-cart data structure `cart`, a `productId` and `quantity` and updates the cart in-place is *not* pure, because it mutates the `cart` parameter.
   * If instead `addToCart` returned a *new* cart (rather than updating in-place) then it would be pure.
-* A function `calculateRiskProfile` which transforms its input parameters, makes a HTTP `GET` web-service call and massages the response from the web-service is *not* pure because of the web-service call:
+* A function `calculateRiskProfile` which transforms its input parameters, makes a HTTP `GET` web-service call and massages the response from the web-service into a return value is *not* pure because of the web-service call:
   * the web-service is a black-box and it's implementation could change at any point in time;
   * the web-service call goes over the network. The network could be down, the request could time-out etc. 
 
-Pure functions are great because:
-* They're super easy to test. You can literally treat them as a black-box "does the function do what it says on the tin?" - given these inputs, does it produce the correct output.
-  * Additionally, intermediate results from a chain of pure functions makes finding a [seam](https://www.informit.com/articles/article.aspx?p=359417&seqNum=3) trivial!
-* They make code easy to reason about. The signature of the function (inputs & output types) largely describes what the function does. Avoiding [primitive obsession](https://wiki.c2.com/?PrimitiveObsession) helps even further in this regard.
-* They facilitate parallelization. If you have an array of items to be processed and a function `processItem` which takes a single such item as an input, you can spin up lots of threads/tasks and give them a chunk of items, not needing to worry about interactions between the calls. This kind of code is extremely scalable.
-* They're easily reusable. Since the function is guaranteed not to have any unwanted side-effects (by definition!) you can reference it anywhere you need it.
+In "proper" functional programming languages like Haskell, all functions are pure by default (i.e. unless explicitly stated otherwise).
+
+#### Advantages of pure functions
+* They're super easy to test because you can treat them as a black-box
+    
+    "Does the function do what it says 🏷️ on the tin 🥫?" - given these inputs, does it produce the correct output? Also, [seams](https://www.informit.com/articles/article.aspx?p=359417&seqNum=3) are obvious
+
+* They make code easy to reason about. The signature of the function (inputs & output types) largely describes what the function does - see also "leaning on the type system"
+
+     Have you ever worked on a codebase with a method innocuously named `GetOrderDetails`, only to discover that function sometimes deletes data?
+
+* They're easy to debug - simply examine the intermediate results as the data flows through the pipeline
+
+* They make parallelization easy
+
+     If you have a large array of items to be processed and a function `processItem` taking a single item as a parameter, it's trivial to parallelize the work across multiple threads/processes
+
+* They're easily reusable
+
+     Since the function is guaranteed not to have any unwanted side-effects (by definition!) you can reference it anywhere you need it.
 * The results from a pure-function can be cached indefinitely! There's no need to worry about the results becoming stale.
 
 See this [post](https://medium.com/@juntomioka/why-pure-functions-are-so-good-7f7759021c35) for more on the benefits of pure functions.
 
-Note for C# programmers: You could consider decorating methods with the `[Pure]` attribute to indicate intent to other developers.
-
-If you're a FP practitioner, _most_ of the code you write will be expressed in pure-functions - which leads us to the next section: Isolation of side-effects.
+Note for C# programmers: The `[Pure]` attribute can be used to indicate intent to other developers.
 
 #### Prefer "value semantics" (even for reference types)
 
@@ -231,9 +230,51 @@ TODO
 
 #### Leaning on the type system
 
+talk about the order example e.g. ShippedOrder, ConfirmedOrder c.f. boolean props
+
+typescript e.g. 
+
+```typescript
+type Country = "England" | "USA" | "France";
+const myCountry: Country = "New Zealand"; // compile error
+```
+
+
+
+Avoiding [primitive obsession](https://wiki.c2.com/?PrimitiveObsession) taken further - algebraic data types
+
 TODO: leaning heavily on the compiler (type system) to help prove the correctness of your program.
 
 
+
+### Higher Ordered Functions
+
+In the object-oriented world, we frequently encounter methods that
+* Accept objects (not just primitive values) as parameters
+* Return an object (rather than a primitive value)
+
+There is a symmetry in the functional-programming world - we have functions that
+* Accept other functions (not just primitive values) as parameters
+* Return a function (rather than a primitive value)
+
+Such functions are known as _Higher order Functions_ (HoFs). HoFs are the primary means for code reuse in functional programming.
+
+For the C# programmers out there, an every-day example of a HoF can be found in LINQ:
+
+```csharp
+var numbers = Enumerable.Range(1, 10);
+
+// Create a function with the signature string → bool
+// (i.e. takes a single string argument and produces a boolean return value)
+Func<int, bool> isEven = theNumber => theNumber % 2 == 0;
+
+// Invoke the LINQ Where method, passing the function in as an argument (the predicate)
+var evenNumbers = numbers.Where(isEven);
+```
+
+Because `Where` takes a function as an argument, it is a HoF.
+
+By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [StrategyPattern](https://en.wikipedia.org/wiki/Strategy_pattern).
 
 Now that we have the core concepts of FP out of the way, let's drill into some more detail.
 
@@ -266,3 +307,5 @@ Other articles / posts:
 https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
 https://cscalfani.medium.com/why-is-learning-functional-programming-so-damned-hard-bfd00202a7d1
 https://mikhail.io/2018/07/monads-explained-in-csharp-again/
+
+mark seeman's posts on monads
