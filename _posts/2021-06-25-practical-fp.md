@@ -14,19 +14,21 @@ An introduction to functional-programming - the low-hanging fruit 🍒🍍🍏
 
 ## Introduction
 
-This post is intended to be a gentle introduction to functional programming (FP) - no prior knowledge assumed.
+This post is intended to be a gentle introduction to functional programming (FP) for C# developers working in the object-oriented (OO) paradigm - no prior knowledge of functional programming is assumed.
 
-I hope that after reading it, you'll have some useful tools & techniques 🔨 in your belt that you can apply to day-to-day software development 👷. It's worth remembering that FP isn't a case of all-or-nothing - you can use _some_ of the ideas, _some of the time_.
+I hope that after reading it, you'll have some useful tools & techniques 🔨 in your belt that you can apply to day-to-day software development 👷. It's worth remembering that FP isn't a case of all-or-nothing - you can use the ideas in isolated areas of the codebase (where it makes sense).
 
 Although functional programming is rooted in mathematics 🧮, I've tried to keep the post practical - if you're interested in the _theory_, there are plenty of other posts out there.
 
-I should also mention that I'm entirely self-taught in this area (is it too late to go back to university?) - I'm very much still learning myself! 
+The post assumes you're familiar with object-oriented programming in C# (.NET).
+
+Finally, I should mention that I'm entirely self-taught (no formal training in functinal programming) and thus I'm very much still learning myself!
 
 ## What are the key ideas from functional programming?
 
 ### Software is built by composing & reusing functions
 
-Admittedly a bit of a cop-out, but I'll start by contrasting functional programming (FP) with object-oriented (OO) programming - which I assume you're familiar with.
+Admittedly a bit of a cop-out, but I'll start by contrasting functional programming (FP) with object-oriented (OO) programming.
 
 In the object-oriented software world, our basic building-blocks 🧱 are _classes_. We use classes to create _object instances_ (or just "objects").
 
@@ -73,12 +75,12 @@ Note that we often treat functions as data too - think along the lines of [rever
 ##### A quick note on encapsulation
 In the world of object-oriented programming, the principal of _encapsulation_ warns us against creating types that are "just data" (i.e. don't have behaviour) - see the [AnemicDomainModel](https://martinfowler.com/bliki/AnemicDomainModel.html).
 
-Encapsulation is a core pillar of object-oriented programming - a well-designed object
+Encapsulation is a core pillar of object-oriented programming - according to OO best-practice, a well-designed object
 * Offers a minimal public interface (API)
 * Hides implementation details
 * Is responsible for protecting its own internal state & invariants 
 
-Encapsulation primarily helps with
+Encapsulation is primarily intended to help with
 * Enabling code reuse
 * Reducing cognitive load for developers
 * Ensuring correct behaviour / reducing bugs
@@ -102,7 +104,15 @@ As an example, imagine some software that deals with lists of people (perhaps a 
 * Under an _immutable_ design, "adding a friend" would create a **new** data structure which is a shallow-copy of the previous friend list **with the new friend added at the end**
   * Any code that has a reference to the original friend list (as it was prior to adding the friend) would continue to see the same list of friends
   * Only code that has deliberately been passed the new friends list will observe the changes 
-  
+
+When programming in an object-oriented (OO) or mixed paradigm (part OO, part FP) style, it is possible to make a class immutable although it takes some care/rigour to do so:
+* The class should not expose any property setters or public fields
+* Any mutating operations (methods) should return a new instance ([copy constructors](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/how-to-write-a-copy-constructor) is the come in handy)
+* Take not to reuse collections when mutating
+* Ideally, all dependencies of the class (constructor arguments) should be immutable also (transitively) 
+
+C# [records](https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/types/records) make writing immutable types substantially easier
+
 ### Almost all functions are pure
 A function is "pure"[^2] if you can replace all calls to that function with pre-computed results (without affecting the program behaviour).
 
@@ -121,10 +131,10 @@ Some examples:
 * A function `addToCart` which takes a shopping-cart data structure `cart`, a `productId` and `quantity` and updates the cart in-place is *not* pure, because it mutates the `cart` parameter.
   * If instead `addToCart` returned a *new* cart (rather than updating in-place) then it would be pure.
 * A function `calculateRiskProfile` which transforms its input parameters, makes a HTTP `GET` web-service call and massages the response from the web-service into a return value is *not* pure because of the web-service call:
-  * the web-service is a black-box and it's implementation could change at any point in time;
-  * the web-service call goes over the network. The network could be down, the request could time-out etc. 
+  * the code executing in the external web-service is entirely out of our control and thus must be assumed to be impure
+  * the web-service call goes over the network. The network could be down, the request could time-out etc
 
-In "proper" functional programming languages like Haskell, all functions are pure by default (i.e. unless explicitly stated otherwise).
+In "proper" functional programming languages (like Haskell), all functions are pure by default (i.e. unless explicitly stated otherwise).
 
 #### Advantages of pure functions
 * They're super easy to test because you can treat them as a black-box
@@ -148,61 +158,21 @@ In "proper" functional programming languages like Haskell, all functions are pur
 
 See this [post](https://medium.com/@juntomioka/why-pure-functions-are-so-good-7f7759021c35) for more on the benefits of pure functions.
 
-Note for C# programmers: The `[Pure]` attribute can be used to indicate intent to other developers.
+Note for C# programmers: The `[Pure]` attribute can be used to indicate _intent_ to other developers (unfortunately, the compiler doesn't enforce anything).
 
-#### Prefer "value semantics" (even for reference types)
-
-In C#, we have a dichotomy of "reference type" vs "value type"
-
-For *reference types* (e.g. objects, arrays and strings):
-* The data is stored on the heap (it could be large)
-* Variables which contain a reference type really only contain a *reference* to the value (i.e. memory location)
-  ```csharp
-  int[] itemsA = { 1, 2, 3 };
-  // itemsB refers to the same object in the heap as itemsA
-  int[] itemsB = itemsA;
-  // Will update itemsA[2] too, since they're the same array in the heap
-  itemsB[2] = 5;
-  ```
-* "Reference equality" is used by default
-  ```csharp
-  int[] itemsA = { 1, 2, 3 };
-  int[] itemsB = { 1, 2, 3 };
-  Console.Out.WriteLine(itemsA == itemsB); // false
-  ```
-
-For *value types* (e.g. structs, most primitives):
-* The data is stored on the stack (value types are typically small in size)
-* Variables which contain a value type *actually contain* the value itself
-  ```csharp
-  int x = 5;
-  int y = x;
-  // Update x after the assignment of x to y. The update to x won't propagate to y
-  x = 6;
-  Console.Out.WriteLine(y); // 5
-  ```
-* "Value equality" is used by default
-  ```csharp
-  Guid guidA = Guid.Parse("1698135c-da61-4f6a-b8e8-506936632a66");
-  Guid guidB = Guid.Parse("1698135c-da61-4f6a-b8e8-506936632a66");
-  Console.Out.WriteLine(guidA == guidB); // true
-  ```
-
-As mentioned previously, in FP we avoid "mushing together state and behavior". As a consequence of that, the type *is* the data it is comprised of. Therefore, the most sensible definition of equality to use is value-based equality: If the constituent parts of two values are equal, then the two values should also be equal.
-
-When we create an object in C# by "newing up" a class, the value we get back is (by definition) a reference type and (by default) will have reference-based equality. However, it is possible to define the class in such a way that it behaves more like a value type (primarily, by overriding `operator ==()` and friends) in terms of equality.
-
-In C# 9.0, [records types](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/operators/equality-operators#record-types-equality) support the `==` and `!=` operators, automatically providing value equality semantics.
-
-#### Isolation of side-effects
+### Isolation of side-effects
 So you're following along, you've probably concluded
 * Pure functions = good
 * Side effects = bad
 
-But as it turns out, side-effects are a necessary evil. All programs (except toy ones) need to do at least one (and often several!) of the following to be useful:
+But as it turns out, side-effects (at least I/O) are a necessary evil. Real programs need to do at least one of the following to be useful:
 * Read input from disk / network / keyboard
-* Write output to the screen / disk
-* Communicate with another program or system (network)
+* Write output to the disk / screen
+* Communicate with another program or system (network, pipe etc)
+
+Again, in "proper" functional programming languages, [the compiler prevents us from performing I/O unless we're in a special context](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/IO) (IO Monad) - similar to how the `await` keyword can't be used unless you're already in an `async` method in C#. 
+
+Unlike Haskell, in C# the compiler can't prevent us from performing I/O in arbitrary code, so the best we can hope for is a "Gentleman's Agreement" (with the other developers on our team) around when and where to perform I/O.
 
 We want to keep as much of our codebase functionally "pure" as possible (for the reasons/benefits listed in the previous section). The basic strategy is to *push side-effects to the very edges* (of the program). 
 
@@ -214,21 +184,17 @@ There's a great blog-post [clean and green](http://drocco007.github.io/2015_pytn
 
 The idea is that the *majority* of the application (_especially_ the complex business logic - the "core") is written in a functional style while the edges / interface to the outside world (the "ports") are written in an object-oriented or imperative style - keeping us in functional land as much as possible.
 
-I've also previously [blogged](2019/10/17/writing-testable-software/) about a similar idea which I coined the "execution plan pattern":
+I've also previously [blogged](2019/10/17/writing-testable-software/) about a similar idea which I call the "execution plan pattern" - the idea is to split figuring out "what needs to be done" from actually doing it - the code to _generate_ the "plan" (from data) is functionally pure (and possibly complex), but the _execution_ of the plan is impure (but simple).
 
-> Essentially, the idea is to split figuring out "what needs to be done" from actually doing it. This pattern works particularly well when the “figuring-out” bit is complex / full of business logic. 
+At any rate, I'd suggest structuring your code so that the bit that actually performs the I/O or side-effects has very low [cyclomatic complexity](https://www.geeksforgeeks.org/cyclomatic-complexity/) - in other words, avoid branching (`if`/`else`) and looping in that code.
 
-One trade-off is that you often end up fetching more data than you need - fetching data is a side-effect, and so we want to do it all at once (at the "top") to avoid the possibility of having to make a subsequent fetch later on.
+For some other ideas, see [the Effect monad (Eff & Aff) in the language-ext library](https://github.com/louthy/language-ext/wiki/How-to-deal-with-side-effects#aff-and-eff-monad).
 
-The are of course other, more formal ways for isolating side-effects in FP (such as the "Effect" monad). But the principal is more important than the specifics of how to achieve it.
-
-It should now be clear that adopting FP is not a case of "all or nothing". You'll often find that certain parts of a program will lend themselves more to FP than others. Be practical about it rather than dogmatic, but make sure it's clear which parts are written in a functional style and which are not (to help with maintainence).
-
-#### Idempotency
+### Idempotency
 
 TODO
 
-#### Leaning on the type system
+### Leaning on the type system
 
 talk about the order example e.g. ShippedOrder, ConfirmedOrder c.f. boolean props
 
@@ -248,6 +214,8 @@ TODO: leaning heavily on the compiler (type system) to help prove the correctnes
 
 
 ### Higher Ordered Functions
+
+TBD: IS THIS SECTION WORTHWHILE? Yes, HoF are a core part of FP. On the other hand, strategy pattern (interface) achieves a similar thing. Use HoF where it makes sense 🤷‍♂️.
 
 In the object-oriented world, we frequently encounter methods that
 * Accept objects (not just primitive values) as parameters
@@ -276,12 +244,8 @@ Because `Where` takes a function as an argument, it is a HoF.
 
 By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [StrategyPattern](https://en.wikipedia.org/wiki/Strategy_pattern).
 
-Now that we have the core concepts of FP out of the way, let's drill into some more detail.
+#### Algebraic Data Types
 
-### 
-
-* Introduction (not "all-or-nothing", functional core with imperative shell. Yes it's rooted in maths)
-* Functions as data
 * Opinion: Recoverable (unchecked) exceptions for (flow control) are evil. Out of memory, out of disk space, assertion exception
 * The problem with null return values. Actually it's just a special case of the general problem of code might not handle all possible return values.
 * Inverting control to get compile-time safety (basically, you can't get at the result unless you promise to deal with or at least acknowledge the edge cases) 
@@ -289,10 +253,9 @@ Now that we have the core concepts of FP out of the way, let's drill into some m
 * Either - and brief segue into union types vs product types (algebraic data types. This post has more info: https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/). Option and Either are both examples of ADTs. Useful in business domain too - preventing invalid states.
 - https://jrsinclair.com/articles/2019/algebraic-structures-what-i-wish-someone-had-explained-about-functional-programming/ railway-oriented-programming: https://fsharpforfunandprofit.com/rop/#slides
 
-#### Algebraic Data Types
 
-We need a section on this since we refer to it
 
+## Further reading
 
 Reference https://github.com/louthy/language-ext 
 
@@ -304,8 +267,10 @@ And also https://github.com/emmanueltouzery/prelude-ts
 
 Other articles / posts: 
 
+https://www.manning.com/books/functional-programming-in-c-sharp (Functional Programming in C#: How to write better C# code)
+
+https://github.com/hemanth/functional-programming-jargon
+
 https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
 https://cscalfani.medium.com/why-is-learning-functional-programming-so-damned-hard-bfd00202a7d1
 https://mikhail.io/2018/07/monads-explained-in-csharp-again/
-
-mark seeman's posts on monads
