@@ -20,8 +20,6 @@ I hope that after reading it, you'll have some useful tools & techniques 🔨 in
 
 Although functional programming is rooted in mathematics 🧮, I've tried to keep the post practical - if you're interested in the _theory_, there are plenty of other posts out there.
 
-The post assumes you're familiar with object-oriented programming in C# (.NET).
-
 Finally, I should mention that I'm entirely self-taught (no formal training in functinal programming) and thus I'm very much still learning myself!
 
 ## What are the key ideas from functional programming?
@@ -33,34 +31,32 @@ Admittedly a bit of a cop-out, but I'll start by contrasting functional programm
 In the object-oriented software world, our basic building-blocks 🧱 are _classes_. We use classes to create _object instances_ (or just "objects").
 
 An object instance combines behaviour _and_ state (data) _together_ (encapsulation). Objects expose methods which (when called)  
-* Modify the object's internal state ("increase item quantity")
+* Modify the object's internal state ("increase line-item quantity")
 * Perform computations ("calculate order shipping cost")
 * Trigger side-effects ("fire the missiles!" 🚀) 
 
-The program as a whole can be viewed as an object [graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)) - there is a root object in the program's entrypoint
+The program as a whole can be viewed as an object [graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)) - there is a root object in the program's entrypoint (composition-root)
 * The root object has references to other objects (it's collaborators)
   * Each of those objects have references to _other_ objects (_their_ collaborators)
     * ...and so on and so forth 
 
-A request comes in from the outside world, the root object calls methods[^1] on _it's_ objects (which in turn call methods) - and thus the program springs to life. 
+A request/message comes in from the outside world (button click, HTTP request, stdin...), the root object calls methods[^1] on _it's_ objects (which in turn call methods) - and thus the program springs to life. 
 
-By way of contrast, in the functional-programming world we don't use
+By way of contrast, functional-programming languages don't use
 * Classes
 * Objects
 * Methods
 
-Instead we basically just have 
+Primarily, they deal with 
 1) Lumps of data 
 2) Functions
 
 (...and some other things like ADTs & typeclasses, which I'll ignore for now)
 
-Avoiding (for the time being) a more nuanced discussion of what a [function](https://en.wikipedia.org/wiki/Function_(mathematics)) is and is not, just think of a function as an _unbound_ method (i.e. a `static` method). 
-
-So unlike a method (which is bound to a particular object), a function just kind of "floats around". Because the function isn't tied to an object, it can only utilise the parameters that were passed in when it was called.
+Avoiding (for the time being) a more nuanced discussion of what a [function](https://en.wikipedia.org/wiki/Function_(mathematics)) is and is not, just think of a function as an _unbound_ method (i.e. a `static` method). So unlike a method (which is bound to a particular object), a function just kind of "floats around". Because the function isn't tied to an object, it can only utilise the parameters that were passed in when it was called.
 
 In the functional programming paradigm, the program as a whole can be viewed as a [computation](https://en.wikipedia.org/wiki/Model_of_computation):
-* A request to perform a calculation comes in from the outside world
+* A request to perform computation comes in from the outside world
 * The request is represented as a lump of data / values
 * The data is passed through a _pipeline_ of functions
   * The output from an upstream function is used as the input to downstream functions
@@ -68,7 +64,7 @@ In the functional programming paradigm, the program as a whole can be viewed as 
   * Once a result has been produced (by a function in the pipeline) that result is never modified (instead, a _new_ result is computed based on the inputs)   
 * Finally, the result of the computation pops out at the other end 🏭
 
-Note that we often treat functions as data too - think along the lines of [reverse-polish-notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation) (RPN) where `calculationToPerform = [2, 4, 8, sum, mult];` represents `2 * (4 + 8)` - the functions `sum` and `mult` have been included alongside operands (numbers)
+Code written in a functional style often treats functions as data too - think along the lines of [reverse-polish-notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation) (RPN) where `calculationToPerform = [2, 4, 8, sum, mult];` represents `2 * (4 + 8)` - the functions `sum` and `mult` have been included alongside operands (numbers).
 
 [^1]: The original proponents of object-oriented programming [didn't really intend for it to work like this](http://lists.squeakfoundation.org/pipermail/squeak-dev/1998-October/017019.html) - it was supposed to be about actors sending messages - closer to how actor-based models like [Akka.NET](https://github.com/akkadotnet) work.
 
@@ -192,9 +188,37 @@ For some other ideas, see [the Effect monad (Eff & Aff) in the language-ext libr
 
 ### Idempotency
 
-TODO
+An action is said to be idempotent if performing the same action **multiple times** yields the same outcome as performing the action **once**.
+
+As an example, consider a "withdraw money" operation acting on a bank account balance:
+
+```
+{
+  balance: "10239.45",
+  asOfDate: "2022-19-08"
+}
+```
+
+By default, a "WITHDRAW $100" action is **not** idempotent, because performing the action once yields a balance of $10,139.45 whereas performing the action three times yields a balance of $9,939.45.
+
+One way to support an idempotent withdraw is as follows:
+
+```
+{
+  balance: "10239.45",
+  asOfDate: "2022-19-08",
+  version: "747"
+}
+```  
+
+Then, when performing the action we include the version number alongside (or as part of) the action. If the version number on the current balance is not as expected then the action is ignored.
+
+Idempotency is typically more applicable to API & high-level system design than  
+
 
 ### Leaning on the type system
+
+In my opinion, this is probably the most powerful and easily 
 
 talk about the order example e.g. ShippedOrder, ConfirmedOrder c.f. boolean props
 
@@ -274,3 +298,5 @@ https://github.com/hemanth/functional-programming-jargon
 https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
 https://cscalfani.medium.com/why-is-learning-functional-programming-so-damned-hard-bfd00202a7d1
 https://mikhail.io/2018/07/monads-explained-in-csharp-again/
+https://buttondown.email/hillelwayne/archive/making-illegal-states-unrepresentable/
+https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
