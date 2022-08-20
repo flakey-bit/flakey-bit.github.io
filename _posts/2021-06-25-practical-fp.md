@@ -201,9 +201,9 @@ As an example, consider a "withdraw money" operation acting on a bank account ba
 
 By default, a "WITHDRAW $100" action is **not** idempotent, because performing the action once yields a balance of $10,139.45 whereas performing the action three times yields a balance of $9,939.45.
 
-One way to support an idempotent withdraw is as follows:
+_One possible way_ to support idempotent actions acting on an account balance is as follows:
 
-```
+```javascript
 {
   balance: "10239.45",
   asOfDate: "2022-19-08",
@@ -211,14 +211,48 @@ One way to support an idempotent withdraw is as follows:
 }
 ```  
 
-Then, when performing the action we include the version number alongside (or as part of) the action. If the version number on the current balance is not as expected then the action is ignored.
+When performing the action we include the version number alongside (or as part of) the action. The code handling the action knows to check the current version number on the balance; if the version number is not the expected version then the action-handler ignores/discards the action. If the version **is** as-expected then the balance is updated and the version is incremented.
 
-Idempotency is typically more applicable to API & high-level system design than  
+```javascript
+{
+  balance: "10139.45",
+  asOfDate: "2022-19-08",
+  version: "748"
+}
+```
 
+Note that as far as _functions_ go, **all "pure" functions are idempotent** (because pure functions _by definition_ do not produce side-effects & do not mutate their inputs) but **not all idempotent functions are pure** - idempotent functions can (and often do) cause side-effects.
+
+As a _consumer_, idempotent APIs and functions & APIs are typically safer (and therefore easier) to use. Consider the difference between consuming a `createDirectory()` function and a similar `ensureDirectoryExists()` function: 
+* When consuming `createDirectory()`, your application code is forced to deal with the possibility that the directory might _already_ exist
+* When consuming `ensureDirectoryExists()`, your application is shielded from that particular possibility (_other_ I/O problems can still occur however)
+
+Idempotency is usually more applicable to API design & systems architecture than it is to general programming, but it's a useful concept to know about. 
 
 ### Leaning on the type system
 
-In my opinion, this is probably the most powerful and easily 
+In my opinion, this is probably the most powerful and easily-adopted aspect of functional programming - the lowest hanging fruit of all 🍉.
+
+As a object-oriented programmer, you might be used to a workflow such as this:
+1. Write some code
+2. Fix any errors reported by the compiler
+3. Run your program & interact with it manually (so-called "exploratory" testing)
+   1. If that yields any issues, then go back to step #1 
+4. Write some automated unit tests for your code
+5. Rinse and repeat
+
+If you follow the [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (test-driven-development) methodology, your approach would look a little different: you'd write the tests earlier and interleaved with writing the production code.
+
+, however that difference isn't important for the point I'm about to make:
+
+As a typical object-oriented developer, a successful compilation (step #2 above) **doesn't give you very high confidence** that your program works correctly, or that it does so for all edge-cases and inputs. You need to write a bunch of tests (and have those tests pass) before having any semblance of confidence. 
+
+The eutopia that functional-programmers strive for is "If my program compiles without errors, it's probably correct" - I refer to this as "leaning on the type system". 
+
+Can't forget to write the tests.
+
+IsShipped
+
 
 talk about the order example e.g. ShippedOrder, ConfirmedOrder c.f. boolean props
 
@@ -234,6 +268,13 @@ const myCountry: Country = "New Zealand"; // compile error
 Avoiding [primitive obsession](https://wiki.c2.com/?PrimitiveObsession) taken further - algebraic data types
 
 TODO: leaning heavily on the compiler (type system) to help prove the correctness of your program.
+
+* Opinion: Recoverable (unchecked) exceptions for (flow control) are evil. Out of memory, out of disk space, assertion exception
+* The problem with null return values. Actually it's just a special case of the general problem of code might not handle all possible return values.
+* Inverting control to get compile-time safety (basically, you can't get at the result unless you promise to deal with or at least acknowledge the edge cases)
+* Option aka Maybe
+* Either - and brief segue into union types vs product types (algebraic data types. This post has more info: https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/). Option and Either are both examples of ADTs. Useful in business domain too - preventing invalid states.
+- https://jrsinclair.com/articles/2019/algebraic-structures-what-i-wish-someone-had-explained-about-functional-programming/ railway-oriented-programming: https://fsharpforfunandprofit.com/rop/#slides
 
 
 
@@ -268,14 +309,7 @@ Because `Where` takes a function as an argument, it is a HoF.
 
 By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [StrategyPattern](https://en.wikipedia.org/wiki/Strategy_pattern).
 
-#### Algebraic Data Types
 
-* Opinion: Recoverable (unchecked) exceptions for (flow control) are evil. Out of memory, out of disk space, assertion exception
-* The problem with null return values. Actually it's just a special case of the general problem of code might not handle all possible return values.
-* Inverting control to get compile-time safety (basically, you can't get at the result unless you promise to deal with or at least acknowledge the edge cases) 
-* Option aka Maybe
-* Either - and brief segue into union types vs product types (algebraic data types. This post has more info: https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/). Option and Either are both examples of ADTs. Useful in business domain too - preventing invalid states.
-- https://jrsinclair.com/articles/2019/algebraic-structures-what-i-wish-someone-had-explained-about-functional-programming/ railway-oriented-programming: https://fsharpforfunandprofit.com/rop/#slides
 
 
 
