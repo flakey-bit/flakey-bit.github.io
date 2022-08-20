@@ -239,15 +239,20 @@ As a object-oriented programmer, you might be used to a workflow such as this:
 3. Run your program & interact with it manually (so-called "exploratory" testing)
    1. If that yields any issues, then go back to step #1 
 4. Write some automated unit tests for your code
-5. Rinse and repeat
+5. Rinse and repeat 🚿
 
-If you follow the [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (test-driven-development) methodology, your approach would look a little different: you'd write the tests earlier and interleaved with writing the production code.
+If you follow the [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (test-driven-development) methodology, your approach would look a little different: you'd write the tests earlier and interleaved with writing the production code. Many proponents of TDD claim it is superior because it yields better (software) designs, however I feel a more _compelling_ reason to adopt TDD is that it offers faster feedback.  
 
-, however that difference isn't important for the point I'm about to make:
+Regardless of whether you follow TDD or not, as a typical object-oriented software developer, a successful compilation (step #2 above) **doesn't give you very high confidence** that your program works correctly, or that it does so for all inputs & edge-cases. You need to write a bunch of tests (and have those tests pass) before having any semblance of confidence. 
 
-As a typical object-oriented developer, a successful compilation (step #2 above) **doesn't give you very high confidence** that your program works correctly, or that it does so for all edge-cases and inputs. You need to write a bunch of tests (and have those tests pass) before having any semblance of confidence. 
+The eutopia that functional-programmers strive for is "If my program compiles, it's probably correct" - I refer to this as "leaning on the type system". Does that mean functional programmers don't write tests? Of course not. But I'd argue they write _fewer_ tests - as an object-oriented programmer many of your tests will fall into the category of 
+* Ensure all edge-cases are handled &
+* Ensure the system prevents some invalid state (e.g. "an order can't be out for delivery if it's waiting on an item to arrive in the warehouse")
 
-The eutopia that functional-programmers strive for is "If my program compiles without errors, it's probably correct" - I refer to this as "leaning on the type system". 
+The idea is that we get the compiler to do the  work for us (ensuring edge cases are handled & invalid states are prevented) so that we don't have to do it in our application code. If we don't have to write code to prevent these problems, then it's less important to write tests showing that the problems have been prevented.
+
+
+
 
 Can't forget to write the tests.
 
@@ -334,3 +339,4 @@ https://cscalfani.medium.com/why-is-learning-functional-programming-so-damned-ha
 https://mikhail.io/2018/07/monads-explained-in-csharp-again/
 https://buttondown.email/hillelwayne/archive/making-illegal-states-unrepresentable/
 https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
+https://www.youtube.com/watch?v=NZ3-fsPIiYM
