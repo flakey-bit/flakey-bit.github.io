@@ -50,6 +50,7 @@ By way of contrast, functional-programming languages don't use
 Primarily, they deal with 
 1) Lumps of data 
 2) Functions
+3) "Side effects" 
 
 (...and some other things like ADTs & typeclasses, which I'll ignore for now)
 
@@ -64,7 +65,7 @@ In the functional programming paradigm, the program as a whole can be viewed as 
   * Once a result has been produced (by a function in the pipeline) that result is never modified (instead, a _new_ result is computed based on the inputs)   
 * Finally, the result of the computation pops out at the other end 🏭
 
-Code written in a functional style often treats functions as data too - think along the lines of [reverse-polish-notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation) (RPN) where `calculationToPerform = [2, 4, 8, sum, mult];` represents `2 * (4 + 8)` - the functions `sum` and `mult` have been included alongside operands (numbers).
+Code written in a functional style often treats functions as data too - think along the lines of [reverse-polish-notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation) (RPN) where `calculationToPerform = [2, 4, 8, sum, mult];` represents `2 * (4 + 8)` - the functions `sum` and `mult` have been included alongside the operands (numbers). A function that takes other functions as data or returns a function as its result is known as a Higher-order Function (HoF). This is a very powerful concept for writing abstractions / reuse.
 
 [^1]: The original proponents of object-oriented programming [didn't really intend for it to work like this](http://lists.squeakfoundation.org/pipermail/squeak-dev/1998-October/017019.html) - it was supposed to be about actors sending messages - closer to how actor-based models like [Akka.NET](https://github.com/akkadotnet) work.
 
@@ -236,12 +237,13 @@ In my opinion, this is probably the most powerful and easily-adopted aspect of f
 As a object-oriented programmer, you might be used to a workflow such as this:
 1. Write some code
 2. Fix any errors reported by the compiler
-3. Run your program & interact with it manually (so-called "exploratory" testing)
-   1. If that yields any issues, then go back to step #1 
+3. Run your program & interact with it manually (so-called "exploratory" testing). If that yields any issues, then go back to step #1 
 4. Write some automated unit tests for your code
 5. Rinse and repeat 🚿
 
-If you follow the [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (test-driven-development) methodology, your approach would look a little different: you'd write the tests earlier and interleaved with writing the production code. Many proponents of TDD claim it is superior because it yields better (software) designs, however I feel a more _compelling_ reason to adopt TDD is that it offers faster feedback.  
+If you follow the [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html) (test-driven-development) methodology, your approach would look a little different: you'd write the tests earlier and you'd write them as you write the production code.
+
+Many proponents of TDD claim it is superior because it yields better (software) designs, however I feel a more _compelling_ reason to adopt TDD is that it offers faster feedback.  
 
 Regardless of whether you follow TDD or not, as a typical object-oriented software developer, a successful compilation (step #2 above) **doesn't give you very high confidence** that your program works correctly, or that it does so for all inputs & edge-cases. You need to write a bunch of tests (and have those tests pass) before having any semblance of confidence. 
 
@@ -249,7 +251,20 @@ The eutopia that functional-programmers strive for is "If my program compiles, i
 * Ensure all edge-cases are handled &
 * Ensure the system prevents some invalid state (e.g. "an order can't be out for delivery if it's waiting on an item to arrive in the warehouse")
 
-The idea is that we get the compiler to do the  work for us (ensuring edge cases are handled & invalid states are prevented) so that we don't have to do it in our application code. If we don't have to write code to prevent these problems, then it's less important to write tests showing that the problems have been prevented.
+The idea is that we get the compiler to do the work for us (ensuring edge cases are handled & invalid states are prevented) so that we don't have to do it in our application code. If we don't have to write code to prevent these problems, then it's less important to write tests showing that the problems have been prevented.
+
+As a massive simplification, we want the compiler to prevent our program from compiling if 
+* It has failed to deal with an edge-case
+* It is creating an invalid state
+
+#### The problem with (unchecked) exceptions
+
+Most modern mainstream programming languages (C#, Python, Java, C++, JavaScript, PHP) use [exceptions](https://en.wikipedia.org/wiki/Exception_handling) to deal with anomalous or exceptional conditions. 
+
+The basic idea is that if something unexpected happens (outside of the "normal" flow) then our code throws an exception. When an exception is thrown, the code that would normally follow is not executed - instead, the call stack is unwound to the nearest frame (call) that explicitly handles exceptions of that type. If the exception is handled (by code lower down in the call stack) then the program can continue (from the point at which the exception was handled) - if not, the program crashes and terminates.
+
+Depending on the programming language, exceptions can be either "checked" or "unchecked":
+* 
 
 
 
