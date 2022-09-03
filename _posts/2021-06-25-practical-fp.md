@@ -261,18 +261,61 @@ As a massive simplification, we want the compiler to prevent our program from co
 
 Most modern mainstream programming languages (C#, Python, Java, C++, JavaScript, PHP) use [exceptions](https://en.wikipedia.org/wiki/Exception_handling) to deal with anomalous or exceptional conditions. 
 
-The basic idea is that if something unexpected happens (outside of the "normal" flow) then our code throws an exception. When an exception is thrown, the code that would normally follow is not executed - instead, the call stack is unwound to the nearest frame (call) that explicitly handles exceptions of that type. If the exception is handled (by code lower down in the call stack) then the program can continue (from the point at which the exception was handled) - if not, the program crashes and terminates.
+The basic idea is that if something unexpected happens (outside of the "normal" flow) then our code can throw an exception. When an exception is thrown, the code that would normally follow is not executed - instead, the call stack is unwound to the nearest frame (call) that explicitly agrees to handle exceptions of that type. If the exception is handled (by code lower down in the call stack) then the program can continue (from the point at which the exception was handled) - if not, the program crashes and terminates.
+
+An important consideration around exceptions is whether the program can reasonably recover from the exceptional circumstance of not:
+* If the computer has run out of memory or we've hit a bug in the operating system then we probably can't recover from that
+* If we made a request to a 3rd party API but the network request timed out, that *is* possibly a situation we can recover from 
 
 Depending on the programming language, exceptions can be either "checked" or "unchecked":
-* 
+* With _checked_ exceptions, the fact that a method can throw a particular exception is part of the signature of the method. To call a method that might throw an exception, you have to promise to handle those exceptions to be allowed to call the method (or you have to pass those exceptions on in *your* signature)
+* With _unchecked_ exceptions, the compiler doesn't know what exceptions (if any) a method might throw. At best, there will be some documentation (written by a human) for the method that lists the exceptions. But there is no guarantee that the list of exceptions in the documentation is accurate or up-to-date.
+
+Checked exceptions sound like a good idea in theory, however in practice (at least in Java) they entail too much ceremony so developers end up bypassing (skipping) the checking.
+
+The problem with unchecked exceptions is that the signature of the method is *dishonest* - consider the following function:
+
+```csharp
+// Determines the largest number in the sequence
+public int FindMaximum(IEnumerable<int> numbers) {
+  if (numbers.Count == 0) {
+    throw new ArgumentException();
+  }
+
+  return numbers.Max();
+}
+```
+
+When the function is in a compiled library, I only see the signature not the implementation i.e. all I see is
+
+```csharp
+public int FindMaximum(IEnumerable<int> numbers);
+```
+
+As the *caller* of the library function, I know that if I provide it with a list of numbers, it will return me a single number (the maximum). But I have no way of knowing that it will explode in my face if the list of numbers I provide is empty. More importantly, my code isn't forced to deal with that possibility.
+
+What we want is a _richer_ function signature in terms of the result:
+* The result might be a number
+* Or the result might be that we *can't* calculate the maximum, because it isn't possible
+
+As a caller of this function, I want to be forced to handle both of these possibilities.
+
+#### The problem with null
+
+Like exceptions, most modern mainstream programming languages have the concept of `null` - a special value which represents the _absence_ of a value / object. 
+
+In most langauges, `null` doesn't have any properties and you can't call any methods on it. If a value happens to be `null` & your code performs property access or invokes a method call on the `null` value, an exception will be thrown (e.g. `NullReferenceException`).
+
+The problem is that *the onus is on the programmer* to remember that a value "might" be null & to guard against it[^3]. 
+
+[^3]: It's worth noting that the situation has become better recently in C# 8.0, with the introduction of [nullable reference types](https://docs.microsoft.com/en-us/dotnet/csharp/nullable-references).
+
+### Sum types to the rescue
+
+The "value might be null" problem and the "it's impossible to " problem have something in common
 
 
-
-
-Can't forget to write the tests.
-
-IsShipped
-
+C# Library: OneOf. 
 
 talk about the order example e.g. ShippedOrder, ConfirmedOrder c.f. boolean props
 
