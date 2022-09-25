@@ -414,20 +414,107 @@ public class ConsumingCode
 
 Interesting note: Mark Seemann points out that the good old visitor pattern [can replicate sum types](https://blog.ploeh.dk/2018/06/25/visitor-as-a-sum-type/) (albeit with a lot more ceremony) if you're having trouble selling functional style programming to your colleagues.
 
-TODO: leaning heavily on the compiler (type system) to help prove the correctness of your program.
+Some particularly useful (idiomatic) examples of sum types:
 
-A key part of the power comes from the inversion of control - instead of reaching inside to get the value, you provide code to consume the value inside. 
+##### Option
 
-* Inverting control to get compile-time safety (basically, you can't get at the result unless you promise to deal with or at least acknowledge the edge cases)
-* Option aka Maybe
-* Either - and brief segue into union types vs product types (algebraic data types. This post has more info: https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/). Option and Either are both examples of ADTs. Useful in business domain too - preventing invalid states.
-- https://jrsinclair.com/articles/2019/algebraic-structures-what-i-wish-someone-had-explained-about-functional-programming/ railway-oriented-programming: https://fsharpforfunandprofit.com/rop/#slides
+`Option<T>` (also known as "Maybe") is a sum type that represents two possible cases:
+* It contains a value of type `T` ("some T") 
+* It is empty ("nothing")
+
+It can be thought of as a safe alternative to returning `null`. As mentioned earlier, if we attempt to call a method / read a property on `null` our code will blow up at runtime.
+
+The key operations we can call on a `Option<T>`:
+* `Map`: Takes a function to transform a `T` into a `TNew` (the two types can be the same)
+  * If the option contains a T, transform the T value (possibly changing the type into `TNew`) and return a `Option<TNew>`
+  * Otherwise (if the option contains Nothing), return an _empty_ option (of type `TNew`)
+* `Bind`: Takes a function to transform a `T` into a `Option<TNew>`
+  * If the current option contains a T, invoke the supplied function (which returns `Option<TNew>`) and remove one layer of "wrapping" - final return type is `Option<TNew`>
+  * Otherwise (if the option contains Nothing), return an _empty_ option (of type `TNew`) 
+
+Both `Map` and `Bind` are used to transform the value inside the option **if it contains something** - if the option is empty then both `Map` and `Bind` simply return an empty option. The only difference between the two operations is that `Bind` removes one level of wrapping ("flattening" the result) - allowing you to use transformations that return `Option<TNew>`
+
+Some example code showing the usage:
+
+```csharp
+// All addresses need to have a city and country. State is optional (depends on country)
+public record Address(string City, string Country, Option<string> State);
+public record Customer(Address Address);
+
+public class ConsumingCode
+{
+    public void Example1()
+    {
+        var cityCode = CustomerRepository.FindCustomer(Guid.NewGuid())
+            // If we successfully found the customer, pull out the address (& the city from the address)
+            // This changes the type - previously it was Option<Customer> (returned by FindCustomer) but the type is now Option<string>
+            .Map(c => c.Address.City) // func1: extract address city
+            // Transform the value inside our Option (take the substring). Note that the type doesn't change with this
+            // operation
+            .Map(city => city.Substring(0, 2)); // func2: compute substring
+
+        // NB: If the CustomerRepository.FindCustomer returned an option containing None, neither of the functions above
+        // (i.e. func1 / func2) would be executed (if the Option contains None, .Map does nothing)
+
+        // To "get at" the value inside cityCode, we need to handle both possibilities
+        var message = cityCode.Match(
+            // Handle the case where the cityCode contains a value
+            value => $"The city code is {value}",
+            // Handle the case where cityCode is empty / contains nothing
+            () => "No city code available"
+        );
+
+        Console.Out.WriteLine(message);
+    }
+
+    public void Example2()
+    {
+        var state = CustomerRepository.FindCustomer(Guid.NewGuid())
+            // If we successfully found the customer, pull out the address
+            // This changes the type from Option<Customer> to Option<Address>
+            .Map(c => c.Address)
+            // The "Bind" operation allows us to call a function that *itself* returns an Option without ending up with
+            // double-nesting - after the Bind operation, the type is Option<string>. If we'd used .Map instead, the type
+            // would be <Option<Option<string>>. Bind is sometimes known as "FlatMap" or "SelectMany"
+            .Bind(address => address.State); // func3: extract the (optional) state from the address
+
+        Option<string> stateCode = state
+            .Map(stateName => stateName[..1] + stateName[^2..1]);
+        
+        // To "get at" the value inside stateCode, we need to handle both possibilities
+        var message = stateCode.Match(
+            // Handle the case where the stateCode contains a value
+            value => $"The state code is {value}",
+            // Handle the case where stateCode is empty / contains nothing
+            () => "No state code available"
+        );        
+    }
+}
+
+public static class CustomerRepository
+{
+    // Method signature indicates that we might not succeed in finding the customer
+    public static Option<Customer> FindCustomer(Guid id)
+    {
+    }
+}
+```
+
+##### Either
+
+...TODO TODO TODO
+
+The library [language-ext](https://github.com/louthy/language-ext) offers implementations of the `Maybe` and `Either` types
+
+Further resources
+* For a deep dive into sum types (and product types), see this [post on algebraic-data-types](https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/)
+* For a different view on `Either`, see the excellent "railway oriented programming" [slides](https://fsharpforfunandprofit.com/rop/#slides)
+
+You might have observed that both `Option` and `Either` offer safety through inversion of control (in Hollywood "don't call us, we'll call you") - instead of reaching inside to get the value/result, you provide code to consume the value inside (if present). This concept (accepting a function as an argument) is an example of a higher-order function (HoF) - which leads on to the final section.
 
 [^4]: Sum types are named due to how the "value space" grows as we add possibilities. If we have a sum type that is _either_ a boolean _or_ a byte i.e. `Boolean | Byte`, there are 2 (true/false) + 256 (0, 1..255) = 258 possible values. By contrast, a "product type" that combines a boolean with a byte has 2 (true/false) * 256 = 512 possible values.
 
 ### Higher Ordered Functions
-
-TBD: IS THIS SECTION WORTHWHILE? Yes, HoF are a core part of FP. On the other hand, strategy pattern (interface) achieves a similar thing. Use HoF where it makes sense 🤷‍♂️.
 
 In the object-oriented world, we frequently encounter methods that
 * Accept objects (not just primitive values) as parameters
