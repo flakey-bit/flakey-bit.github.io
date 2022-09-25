@@ -249,9 +249,9 @@ Regardless of whether you follow TDD or not, as a typical object-oriented softwa
 
 The eutopia that functional-programmers strive for is "If my program compiles, it's probably correct" - I refer to this as "leaning on the type system". Does that mean functional programmers don't write tests? Of course not. But I'd argue they write _fewer_ tests - as an object-oriented programmer many of your tests will fall into the category of 
 * Ensure all edge-cases are handled &
-* Ensure the system prevents some invalid state (e.g. "an order can't be out for delivery if it's waiting on an item to arrive in the warehouse")
+* Ensure invalid states are prevented (e.g. "an order can't be out for delivery if it's waiting on an item to arrive in the warehouse")
 
-The idea is that we get the compiler to do the work for us (ensuring edge cases are handled & invalid states are prevented) so that we don't have to do it in our application code. If we don't have to write code to prevent these problems, then it's less important to write tests showing that the problems have been prevented.
+The idea is that we get the compiler to do the work for us (ensuring edge cases are handled & invalid states are prevented) so that we don't have to do it in our application code. If we don't have to write code to prevent these problems, then it's less important to write _tests_ showing that the problems have been prevented.
 
 As a massive simplification, we want the compiler to prevent our program from compiling if 
 * It has failed to deal with an edge-case
@@ -265,11 +265,12 @@ The basic idea is that if something unexpected happens (outside of the "normal" 
 
 An important consideration around exceptions is whether the program can reasonably recover from the exceptional circumstance of not:
 * If the computer has run out of memory or we've hit a bug in the operating system then we probably can't recover from that
-* If we made a request to a 3rd party API but the network request timed out, that *is* possibly a situation we can recover from 
+* If we made a request to a 3rd party API but the network request timed out, that *is* probably a situation we can recover from
+* If one of our invariants (e.g. the current method should never be called with an empty array) has been violated then we _might_ be able to recover from that, but applying the [fail-fast principal](https://www.martinfowler.com/ieeeSoftware/failFast.pdf) would probably be more advisable
 
 Depending on the programming language, exceptions can be either "checked" or "unchecked":
 * With _checked_ exceptions, the fact that a method can throw a particular exception is part of the signature of the method. To call a method that might throw an exception, you have to promise to handle those exceptions to be allowed to call the method (or you have to pass those exceptions on in *your* signature)
-* With _unchecked_ exceptions, the compiler doesn't know what exceptions (if any) a method might throw. At best, there will be some documentation (written by a human) for the method that lists the exceptions. But there is no guarantee that the list of exceptions in the documentation is accurate or up-to-date.
+* With _unchecked_ exceptions, the compiler doesn't know what exceptions (if any) a method might throw. At best, the method documentation will list the exceptions. But there is no guarantee that the list of exceptions in the documentation is accurate or up-to-date
 
 Checked exceptions sound like a good idea in theory, however in practice (at least in Java) they entail too much ceremony so developers end up bypassing (skipping) the checking.
 
@@ -286,7 +287,7 @@ public int FindMaximum(IEnumerable<int> numbers) {
 }
 ```
 
-When the function is in a compiled library, I only see the signature not the implementation i.e. all I see is
+When the function is in a compiled library, the programmer only sees the signature - not the implementation:
 
 ```csharp
 public int FindMaximum(IEnumerable<int> numbers);
@@ -296,50 +297,133 @@ As the *caller* of the library function, I know that if I provide it with a list
 
 What we want is a _richer_ function signature in terms of the result:
 * The result might be a number
-* Or the result might be that we *can't* calculate the maximum, because it isn't possible
+* **Or**, the result might be that we *can't* calculate the maximum (because it isn't possible)
 
 As a caller of this function, I want to be forced to handle both of these possibilities.
 
 #### The problem with null
 
-Like exceptions, most modern mainstream programming languages have the concept of `null` - a special value which represents the _absence_ of a value / object. 
+Similarly, most object-oriented programming languages have the concept of `null` - a special value which represents the _absence_ of a value / object. 
 
-In most langauges, `null` doesn't have any properties and you can't call any methods on it. If a value happens to be `null` & your code performs property access or invokes a method call on the `null` value, an exception will be thrown (e.g. `NullReferenceException`).
+Typically, `null` doesn't have any properties and you can't call any methods on it. If a variable happens to contain `null` & your code performs property access or invokes a method call on the `null` value, an exception will be thrown (e.g. `NullReferenceException`).
 
-The problem is that *the onus is on the programmer* to remember that a value "might" be null & to guard against it[^3]. 
+The problem is that *the onus is on the programmer* to remember that a value "might" be null & to guard against it[^3].
 
 [^3]: It's worth noting that the situation has become better recently in C# 8.0, with the introduction of [nullable reference types](https://docs.microsoft.com/en-us/dotnet/csharp/nullable-references).
 
-### Sum types to the rescue
+#### Boolean fields are often a code smell
 
-The "value might be null" problem and the "it's impossible to " problem have something in common
+Imagine a fictional `Order` class in an object-oriented programming language:
 
-
-C# Library: OneOf. 
-
-talk about the order example e.g. ShippedOrder, ConfirmedOrder c.f. boolean props
-
-typescript e.g. 
-
-```typescript
-type Country = "England" | "USA" | "France";
-const myCountry: Country = "New Zealand"; // compile error
+```csharp
+public class Order {
+    private bool _isShipped;
+    private bool _isDelivered;
+    //.. more fields 
+    
+    public void AddLineItem(LineItem item) {
+        if (_isShipped) {
+            throw new InvalidOperationException("Can't add items to an already shipped order!");
+        }
+        // ... implementation follows
+    }
+    
+    public DateTimeOffset GetEstimatedDeliveryDate() {
+        if (_isDelivered) {
+            // ...special case, we can return the actual delivery date as the "estimated" date 
+        } else if (!_isShipped) {
+            throw new InvalidOperationException("Can't estimate the delivery date for an order that has not yet shipped!");
+        } else {
+            // ... implementation follows
+        }
+    }
+    
+    public decimal GetOrderTotal() {/*...*/}
+}
 ```
 
+Assume there is an `IOrderService` which allows us to fetch all `Order` instances in a list. A problem arises when we try and iterate over the items (to show the estimated delivery date for each) - we (**as the caller**) need to either
+* "Look before we leap" by checking the status of the order
+* Be prepared to catch the exception that could be thrown (if the order isn't yet shipped) 
 
+The problem isn't so much that we need to take a preventive measure, it's that
+* We have to **know** that we need to take one
+  * This knowledge has to come from out-of-band (by reading documentation) 
+* Even if we know that we need to take a preventive measure, the compiler doesn't help us if we forget 
 
-Avoiding [primitive obsession](https://wiki.c2.com/?PrimitiveObsession) taken further - algebraic data types
+Unfortunately, in practice, often the way that we learn is by our code blowing up in production 💣
+
+The modelling could be improved by using more specific types - perhaps we'd make `Order` abstract and introduce `NewOrder`, `ShippedOrder` and `DeliveredOrder` - these types would only support the operations that make sense for them:
+* No `AddLineItem` on a `DeliveredOrder`
+* No `GetEstimatedDeliveryDate` on a `NewOrder`
+
+This is definitively an improvement, but it's not perfect - the calling code still needs to perform a runtime type-check and cast the abstract type to the appropriate subtype. If a new subtype is introduced (e.g. `CancelledOrder`) the calling code will need to be updated.  
+
+#### Sum types (discriminated unions) to the rescue 🚑
+
+It turns out that the three problems mentioned above i.e.
+* "calculation could fail/is impossible" (max of empty list)
+* "value might be missing" (null) &
+* "valid operations depend on state" (estimate delivery date) 
+
+basically boil down to the same thing: we need the type-system to capture that a given value is of *exactly one of several types* (mutually exclusive) and for the compiler to force us to deal with those possibilities.  
+
+Languages like Haskell have native support for expressing that a type is actually "one of" several other types - this is known as a "sum type"[^4]. Other languages like F# have something similar (called discriminated unions).
+
+A discriminated union is a type T that is composed of two or more types (P|Q|R...) with a field/tag that indicates (to the compiler) which type a value actually is (i.e. _discriminates_ whether the value is actually a P, a Q or an R).
+
+As a concrete example (stolen from [here](http://learnyouahaskell.com/making-our-own-types-and-typeclasses)), assume our domain requires modelling geometric shapes. 
+
+We define a shape type as being either a `Circle` or a `Rectangle`
+* A circle has a (x, y) coordinate (`center`) and a `radius`
+* A rectangle is defined by two (x, y) coordinates (`topLeft`) & `bottomRight`)
+
+With discriminated unions we not-only need to specify the core data for each shape (`center` + `radius` for a circle / `topLeft` + `bottomRight` for a rectangle), we need to capture the shape type in a field common to all shapes - e.g. `shapeType`. The value (e.g "CIRCLE" / "RECTANGLE") needs to be unique for each constituent type.
+
+We can then write a function that takes a shape and calculates the surface area:
+* The compiler forces us to handle every possibility in the union
+  * If a new type `Triangle` is added to the union, our code won't compile until we handle the triangle case
+* The compiler ensures we can only use the data that pertains to the type in question - e.g. if we're handling the square case, we're unable to access the "radius"
+
+Unfortunately, C# doesn't have discriminated unions yet (although there is a [proposal]((https://github.com/dotnet/csharplang/blob/main/proposals/discriminated-unions.md)) to add them). For now, there's a great library called [OneOf](https://github.com/mcintyre321/OneOf) that uses source generators to add F# style unions to C# without too much boilerplate.
+
+Here's an example showing OneOf in action:
+
+```csharp
+public record Point(int X, int Y);
+public record Circle(Point Centre, double Radius);
+public record Rectangle(Point TopLeft, Point BottomRight);
+
+// A shape is either a Circle or a Rectangle
+public class Shape : OneOfBase<Circle, Rectangle>
+{
+}
+
+public class ConsumingCode
+{
+    public void WithSomeShape(Shape someShape)
+    {
+        // The compiler will force us to deal with all the "shape" possibilities here
+        double area = someShape.Match(
+            circle => Math.PI * circle.Radius * circle.Radius,
+            rect => Math.Abs(rect.BottomRight.X - rect.TopLeft.X) * Math.Abs(rect.BottomRight.Y - rect.TopLeft.Y)
+        );
+    }
+}
+```
+
+Interesting note: Mark Seemann points out that the good old visitor pattern [can replicate sum types](https://blog.ploeh.dk/2018/06/25/visitor-as-a-sum-type/) (albeit with a lot more ceremony) if you're having trouble selling functional style programming to your colleagues.
 
 TODO: leaning heavily on the compiler (type system) to help prove the correctness of your program.
 
-* Opinion: Recoverable (unchecked) exceptions for (flow control) are evil. Out of memory, out of disk space, assertion exception
-* The problem with null return values. Actually it's just a special case of the general problem of code might not handle all possible return values.
+A key part of the power comes from the inversion of control - instead of reaching inside to get the value, you provide code to consume the value inside. 
+
 * Inverting control to get compile-time safety (basically, you can't get at the result unless you promise to deal with or at least acknowledge the edge cases)
 * Option aka Maybe
 * Either - and brief segue into union types vs product types (algebraic data types. This post has more info: https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/). Option and Either are both examples of ADTs. Useful in business domain too - preventing invalid states.
 - https://jrsinclair.com/articles/2019/algebraic-structures-what-i-wish-someone-had-explained-about-functional-programming/ railway-oriented-programming: https://fsharpforfunandprofit.com/rop/#slides
 
-
+[^4]: Sum types are named due to how the "value space" grows as we add possibilities. If we have a sum type that is _either_ a boolean _or_ a byte i.e. `Boolean | Byte`, there are 2 (true/false) + 256 (0, 1..255) = 258 possible values. By contrast, a "product type" that combines a boolean with a byte has 2 (true/false) * 256 = 512 possible values.
 
 ### Higher Ordered Functions
 
