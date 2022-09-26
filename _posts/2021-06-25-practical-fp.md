@@ -414,13 +414,15 @@ public class ConsumingCode
 
 Interesting note: Mark Seemann points out that the good old visitor pattern [can replicate sum types](https://blog.ploeh.dk/2018/06/25/visitor-as-a-sum-type/) (albeit with a lot more ceremony) if you're having trouble selling functional style programming to your colleagues.
 
-Some particularly useful (idiomatic) examples of sum types:
+For a deep dive into sum types (and product types), see this [post on algebraic-data-types](https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/)
+
+A couple of particularly useful (idiomatic) sum types are "Option" and "Either":
 
 ##### Option
 
-`Option<T>` (also known as "Maybe") is a sum type that represents two possible cases:
-* It contains a value of type `T` ("some T") 
-* It is empty ("nothing")
+`Option<T>` (also known as "Maybe") is a sum type that represents two possible (mutually exclusive) cases:
+* It can contain a value of type `T` ("some T") **OR** 
+* It can be empty ("nothing")
 
 It can be thought of as a safe alternative to returning `null`. As mentioned earlier, if we attempt to call a method / read a property on `null` our code will blow up at runtime.
 
@@ -434,7 +436,7 @@ The key operations we can call on a `Option<T>`:
 
 Both `Map` and `Bind` are used to transform the value inside the option **if it contains something** - if the option is empty then both `Map` and `Bind` simply return an empty option. The only difference between the two operations is that `Bind` removes one level of wrapping ("flattening" the result) - allowing you to use transformations that return `Option<TNew>`
 
-Some example code showing the usage:
+Some example code showing `Option` in action:
 
 ```csharp
 // All addresses need to have a city and country. State is optional (depends on country)
@@ -502,13 +504,89 @@ public static class CustomerRepository
 
 ##### Either
 
-...TODO TODO TODO
+`Either<TLeft, TRight>` is a sum type that represents two possible (mutually exclusive) cases:
+* It might contain a "left" value (of type `TLeft`) **OR**
+* It might contain a "right" value of type `TRight`
 
-The library [language-ext](https://github.com/louthy/language-ext) offers implementations of the `Maybe` and `Either` types
+An `Either` in the "left" state represents a failed computation (any subsequent steps will be _skipped_, as with `Option`). An `Either` in the "right" state represents a computation that has thus far has succeeded (and subsequent steps will be executed).
 
-Further resources
-* For a deep dive into sum types (and product types), see this [post on algebraic-data-types](https://jrsinclair.com/articles/2019/algebraic-data-types-what-i-wish-someone-had-explained-about-functional-programming/)
-* For a different view on `Either`, see the excellent "railway oriented programming" [slides](https://fsharpforfunandprofit.com/rop/#slides)
+In many ways `Either` is very similar to `Option`, the primary difference being it allows capturing an indication of **what went wrong**. It's an excellent alternative to using exceptions for flow control. 
+
+As with `Option`, the key operations we can call on a `Either<TLeft, TRight>` are:
+* `Map`: Takes a function to transform a `TRight` into a `TRightNew`
+  * If the `Either` is in the "right" state (i.e. it contains a `TRight` value), `Map` calls the supplied function to transform the `TRight` value (into a `TRightNew`) and returns a `Either<TLeft, TRightNew>` (in the "right" i.e. success state)
+  * Otherwise (if the `Either` was in the "left" state - representing failed computation), `Map` skips calling the supplied function and simply returns a `Either<TLeft, TRightNew>` in the "left" state
+* `Bind`: Takes a function to transform a `TRight` into an `Either<TLeft, TRightNew>`
+  * If the `Either` is in the "right" state (i.e. it contains a `TRight` value), `Bind` calls the supplied function which returns an `Either<TLeft, TRightNew>` & removes one layer of "wrapping" - the final return type is `Either<TLeft, TRightNew`> 
+  * Otherwise (if the `Either` was in the "left" state - representing failed computation), `Bind` skips calling the supplied function and simply returns a `Either<TLeft, TRightNew>` in the "left" state
+
+Both `Map` and `Bind` are used to transform the value inside the `Either` **if the computation has succeeded so far**. If (on the other hand) the computation has failed (the `Either` is in the "left" state) then both `Map` and `Bind` simply return an `Either` in the "left" state. The only difference between the two operations is that `Bind` removes one level of wrapping ("flattening" the result) - allowing you to use transformations that themselves return an `Either`.
+
+Note that while `Bind` allows the "right" type to evolve (i.e. `TRight` -> `TRightNew`) it does not allow the "left" type to evolve. Some implementations offer operations (e.g. `Match` or `MapLeft`) to evolve the "left" type, but it's not really a core part of `Either`. 
+
+Some example code showing `Either` in action:
+
+```csharp
+public enum ErrorKind
+{
+    NotBlogFound,
+    CommentTextInvalid
+}
+
+public record BlogPost(Guid BlogPostId, string Title, IReadOnlyCollection<CommentDto> Comments);
+public record CommentDto(string CommentText);
+
+public class BlogController : Controller
+{
+    [HttpGet]
+    [Route("v1/[controller]/{blogId:guid}/Title")]
+    public IActionResult FetchBlogTitle(Guid blogId, CommentDto comment)
+    {
+        // LoadBlog returns Either<ErrorKind, Blog>
+        return BlogService.LoadBlog(blogId)
+            // If we've successfully loaded the blog, pull out the title
+            .Map(post => post.Title)
+            // Match() forces us to handle both cases of the Either, unifying down to a single type (IActionResult in this case)
+            .Match<IActionResult>(
+                title => Ok(title), // return type from Ok() is IActionResult
+                errorKind => BadRequest($"There was a problem: {Enum.GetName(errorKind)}") // return type from BadRequest() is IActionResult too
+            );
+    }
+
+    [HttpPost]
+    [Route("v1/[controller]/{blogId:guid}/Comment")]
+    public IActionResult AddComment(Guid blogId, CommentDto comment)
+    {
+        // LoadBlog returns Either<ErrorKind, Blog>
+        return BlogService.LoadBlog(blogId)
+            // The "Bind" operation allows us to call a function that *itself* returns an Either without ending up with
+            // double-nesting - after the Bind operation, the type is Either<ErrorKind, Guid>. If we'd used .Map instead, the type
+            // would be <Either<ErrorKind, Either<ErrorKind, Guid>>. Bind is sometimes known as "FlatMap" or "SelectMany"
+            .Bind(blog => BlogService.AddCommentToBlog(blog, comment))
+            .Match<IActionResult>(
+                createdCommentId => Ok(createdCommentId), // return type from Ok() is IActionResult
+                errorKind => BadRequest($"There was a problem: {Enum.GetName(errorKind)}") // return type from BadRequest() is IActionResult too
+            );
+    }
+}
+
+public static class BlogService
+{
+    // Method signature indicates that we might not succeed in loading the blog
+    public static Either<ErrorKind, BlogPost> LoadBlog(Guid blogId)
+    {
+    }
+
+    // Method signature indicates that adding the comment could fail
+    public static Either<ErrorKind, Guid> AddCommentToBlog(BlogPost post, CommentDto comment)
+    {
+    }
+}
+```
+
+For more information on how to use the Either type, see the excellent "railway oriented programming" [slides](https://fsharpforfunandprofit.com/rop/#slides) 
+
+If you're looking to use `Option` & `Either` in your C# code, consider using the library [language-ext](https://github.com/louthy/language-ext) which offers fully fleshed-out implementations.
 
 You might have observed that both `Option` and `Either` offer safety through inversion of control (in Hollywood "don't call us, we'll call you") - instead of reaching inside to get the value/result, you provide code to consume the value inside (if present). This concept (accepting a function as an argument) is an example of a higher-order function (HoF) - which leads on to the final section.
 
