@@ -1,26 +1,26 @@
 ---
-title: 'Practical functional-programming part 1'
-date: 2021-06-25T10:35:00+12:00
+title: 'A gentle introduction to functional programming'
+date: 2022-09-26T10:35:00+12:00
 author: eddiewould
 layout: post
-permalink: /2021/06/25/practical-fp-part-1/
+permalink: /2022/09/26/a-gentle-introduction-to-functional-programming/
 spay_email:
   - ""
 categories:
   - Uncategorized
 ---
 
-An introduction to functional-programming - the low-hanging fruit 🍒🍍🍏
+A gentle introduction to functional-programming - the low-hanging fruit 🍒🍍🍏
 
 ## Introduction
 
-This post is intended to be a gentle introduction to functional programming (FP) for C# developers working in the object-oriented (OO) paradigm - no prior knowledge of functional programming is assumed.
+This post is intended to provide a _gentle_ introduction to the world of functional programming (FP) for C# developers working in the object-oriented (OO) paradigm - no prior knowledge of functional programming is assumed.
 
-I hope that after reading it, you'll have some useful tools & techniques 🔨 in your belt that you can apply to day-to-day software development 👷. It's worth remembering that FP isn't a case of all-or-nothing - you can use the ideas in isolated areas of the codebase (where it makes sense).
+Basically, my goal is to convince you that FP has some cool things to offer - hopefully whetting your appetite for further learning (I've tried to link to resources that I found easy to digest). You might also add some tools & techniques 🔨 to your belt that you can apply to day-to-day software development 👷. 
 
-Although functional programming is rooted in mathematics 🧮, I've tried to keep the post practical - if you're interested in the _theory_, there are plenty of other posts out there.
+Although functional programming is rooted in mathematics 🧮, I've tried to keep the post practical & approachable - if you're interested in the _theory_, there are plenty of other posts out there.
 
-Finally, I should mention that I'm entirely self-taught (no formal training in functinal programming) and thus I'm very much still learning myself!
+Finally, I should mention that I have no formal qualifications in FP so take what you read with a grain of salt 🧂
 
 ## What are the key ideas from functional programming?
 
@@ -42,19 +42,24 @@ The program as a whole can be viewed as an object [graph](https://en.wikipedia.o
 
 A request/message comes in from the outside world (button click, HTTP request, stdin...), the root object calls methods[^1] on _it's_ objects (which in turn call methods) - and thus the program springs to life. 
 
-By way of contrast, functional-programming languages don't use
+By way of contrast, "proper" functional-programming languages don't use
 * Classes
 * Objects
 * Methods
 
 Primarily, they deal with 
 1) Lumps of data 
-2) Functions
-3) "Side effects" 
+2) Pure functions (calculations)
+3) Actions (code that causes "side effects") 
 
-(...and some other things like ADTs & typeclasses, which I'll ignore for now)
+(...and some other things like ADTs & typeclasses, which I'll ignore)
 
-Avoiding (for the time being) a more nuanced discussion of what a [function](https://en.wikipedia.org/wiki/Function_(mathematics)) is and is not, just think of a function as an _unbound_ method (i.e. a `static` method). So unlike a method (which is bound to a particular object), a function just kind of "floats around". Because the function isn't tied to an object, it can only utilise the parameters that were passed in when it was called.
+Avoiding a more nuanced discussion of what a [function](https://en.wikipedia.org/wiki/Function_(mathematics)) is and is not, just think of a function as an _unbound_ method (i.e. a `static` method).
+* A method is bound to a particular object (instance)
+* A function just kind of "floats around" (it isn't tied to any particular object).
+  * As a consequence, a function **can only utilise the parameters that were explicitly passed in** when it was called.
+
+If that distinction doesn't make sense, don't worry about it for now - just use the words "method" and "function" interchangeably.
 
 In the functional programming paradigm, the program as a whole can be viewed as a [computation](https://en.wikipedia.org/wiki/Model_of_computation):
 * A request to perform computation comes in from the outside world
@@ -64,12 +69,13 @@ In the functional programming paradigm, the program as a whole can be viewed as 
   * The data may change _shape_ as it passes through the pipeline
   * Once a result has been produced (by a function in the pipeline) that result is never modified (instead, a _new_ result is computed based on the inputs)   
 * Finally, the result of the computation pops out at the other end 🏭
+  * If the computation needs to trigger side-effects (saving to disk, responding to the request) then these typically happen at the beginning/end  
 
 Code written in a functional style often treats functions as data too - think along the lines of [reverse-polish-notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation) (RPN) where `calculationToPerform = [2, 4, 8, sum, mult];` represents `2 * (4 + 8)` - the functions `sum` and `mult` have been included alongside the operands (numbers). A function that takes other functions as data or returns a function as its result is known as a Higher-order Function (HoF). This is a very powerful concept for writing abstractions / reuse.
 
 [^1]: The original proponents of object-oriented programming [didn't really intend for it to work like this](http://lists.squeakfoundation.org/pipermail/squeak-dev/1998-October/017019.html) - it was supposed to be about actors sending messages - closer to how actor-based models like [Akka.NET](https://github.com/akkadotnet) work.
 
-##### A quick note on encapsulation
+#### A quick note on encapsulation
 In the world of object-oriented programming, the principal of _encapsulation_ warns us against creating types that are "just data" (i.e. don't have behaviour) - see the [AnemicDomainModel](https://martinfowler.com/bliki/AnemicDomainModel.html).
 
 Encapsulation is a core pillar of object-oriented programming - according to OO best-practice, a well-designed object
@@ -111,12 +117,16 @@ When programming in an object-oriented (OO) or mixed paradigm (part OO, part FP)
 C# [records](https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/types/records) make writing immutable types substantially easier
 
 ### Almost all functions are pure
-A function is "pure"[^2] if you can replace all calls to that function with pre-computed results (without affecting the program behaviour).
+A function is "pure"[^2] if you can replace all calls to that function with pre-computed results (without affecting the program behaviour). 
+
+A good litmus test is "If it matters how many times we call the function (or whether we call it at all), it's not pure" - a `SendEmail` function is clearly not pure
+* If we don't call it at all, the customer doesn't receive an email
+* If we call it 100 times, the customer gets 100 emails (oops 🤭)
 
 For a function to be pure, it must adhere to the following:
 * The return value must depend *solely* on the function inputs
 * The function must not mutate (modify) any of its input parameters
-* The function must not trigger any side-effects (such as writing to disk, network calls etc)
+* The function must not trigger any side-effects (such as writing to disk, network calls, updating global state etc)
 * It may only call other pure functions
 
 [^2]: You might encounter a similar term "referential transparency" - which is essentially the same thing but a weaker guarantee as it allows _insignificant_ side-effects (such as writing to the console or logging).
@@ -130,6 +140,20 @@ Some examples:
 * A function `calculateRiskProfile` which transforms its input parameters, makes a HTTP `GET` web-service call and massages the response from the web-service into a return value is *not* pure because of the web-service call:
   * the code executing in the external web-service is entirely out of our control and thus must be assumed to be impure
   * the web-service call goes over the network. The network could be down, the request could time-out etc
+
+It's worth emphasising that impurity spreads like a zombie 🧟 virus - assume a call stack that looks like the following
+```
+SendEmail()
+GenerateAndSendConfirmationEmail()
+ProcessCustomer()
+ProcessCustomers()
+Main() // program entrypoint
+```
+
+* Because `SendEmail` is impure and `GenerateAndSendConfirmationEmail` calls `SendEmail`, `GenerateAndSendConfirmationEmail` is impure itself
+* Because `GenerateAndSendConfirmationEmail` is impure and `ProcessCustomer()` calls `GenerateAndSendConfirmationEmail`, `ProcessCustomer()` is impure
+* ...
+* therefore the whole call stack (right the way to `Main()`) is impure
 
 In "proper" functional programming languages (like Haskell), all functions are pure by default (i.e. unless explicitly stated otherwise).
 
@@ -157,6 +181,8 @@ See this [post](https://medium.com/@juntomioka/why-pure-functions-are-so-good-7f
 
 Note for C# programmers: The `[Pure]` attribute can be used to indicate _intent_ to other developers (unfortunately, the compiler doesn't enforce anything).
 
+Functional programmers aim to write as much of their application in terms of pure functions as possible - keeping actions simple & **at the edges** (bottom of the call stack).
+
 ### Isolation of side-effects
 So you're following along, you've probably concluded
 * Pure functions = good
@@ -181,9 +207,9 @@ There's a great blog-post [clean and green](http://drocco007.github.io/2015_pytn
 
 The idea is that the *majority* of the application (_especially_ the complex business logic - the "core") is written in a functional style while the edges / interface to the outside world (the "ports") are written in an object-oriented or imperative style - keeping us in functional land as much as possible.
 
-I've also previously [blogged](2019/10/17/writing-testable-software/) about a similar idea which I call the "execution plan pattern" - the idea is to split figuring out "what needs to be done" from actually doing it - the code to _generate_ the "plan" (from data) is functionally pure (and possibly complex), but the _execution_ of the plan is impure (but simple).
+I've also previously [blogged](2019/10/17/writing-testable-software/) about a similar idea which I call the "execution plan pattern" - the idea is to split figuring out "what needs to be done" from actually doing it - the code to _generate_ the "plan" (from data) is functionally pure (and possibly complex), but the _execution_ of the plan is impure (but simple). 
 
-At any rate, I'd suggest structuring your code so that the bit that actually performs the I/O or side-effects has very low [cyclomatic complexity](https://www.geeksforgeeks.org/cyclomatic-complexity/) - in other words, avoid branching (`if`/`else`) and looping in that code.
+Another way to think about it is that your "functional core" produces a list of action _descriptions_ (side effects) to execute. Those actions are finally executed near the entrypoint to your program. The code that finally executes the side-effects or I/O should have very low [cyclomatic complexity](https://www.geeksforgeeks.org/cyclomatic-complexity/) - in other words, avoid branching (`if`/`else`) and looping in that code.
 
 For some other ideas, see [the Effect monad (Eff & Aff) in the language-ext library](https://github.com/louthy/language-ext/wiki/How-to-deal-with-side-effects#aff-and-eff-monad).
 
@@ -256,6 +282,100 @@ The idea is that we get the compiler to do the work for us (ensuring edge cases 
 As a massive simplification, we want the compiler to prevent our program from compiling if 
 * It has failed to deal with an edge-case
 * It is creating an invalid state
+
+#### Parse instead of validating (make illegal states unrepresentable)
+
+Alexis King has written an excellent [blog-post](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) on this subject, which I highly recommend reading (however her post uses Haskell in the examples, which may dissuade some readers). 
+
+One key ways functional programmers lean on the type system is by preferring parsing over validation. What is the difference between the two?
+* When we _validate_ a value, **all we do** is check that it meets our expectations (for example: value must be non-negative; value must be less than 256)
+  * If the validation fails then we typically halt further processing (return an error, throw an exception etc)
+  * If the validation succeeds then the value is permitted through and processing continues
+* When we _parse_ a value **we make it fit into a more rigid structure** - such a structure will often have multiple parts (with different shapes), repeating groups etc.
+
+As an example, consider an Australian bank account number. A validation-based approach would probably represent an account number as a `string` - and add a method to check that an account number is valid:
+```csharp
+public static void CheckValidAccountNumber(string accountNumber) {
+    if (... || ... || .../* various checks */) {
+        throw new ArgumentException("Invalid account number", nameof(accountNumber));
+    }
+}
+```
+
+The main problems with this approach are:
+* It's not always clear whose responsibility it is to validate a value (where should `CheckValidAccountNumber` be called from?)
+* It's not always clear whether a value has already been validated (assume we're deep in the middle of a business-service somewhere and we receive a string containing an account number, should we validate it before making REST API call to a 3rd party webservice?)
+
+At best, this leads to "shotgun parsing":
+
+> Shotgun parsing is a programming antipattern whereby parsing and input-validating code is mixed with and spread across processing code—throwing a cloud of checks at the input, and hoping, without any systematic justification, that one or another would catch all the “bad” cases.
+
+At worst, we might forget to perform the validation **at all** (or remove it by mistake).
+
+What would a parsing-based approach look like? Well, we know that Australian bank account numbers are composed of a "BSB" (Bank State Branch number) & a six digit account number ("namespaced" to the BSB).
+
+So you could model it like this:
+
+```csharp
+public record AustralianBankAccountNumber(AustralianBsb Bsb, string LocalAccountNumber);
+public record AustralianBsb(string Value);
+```
+
+Digging a bit further still, a BSB `XXY-ZZZ` is comprised of three parts:
+* `XX`: The parent financial institution (e.g. "03" for Westpac Banking Corporation
+* `Y`:  The state where the branch is located (e.g. "3" for Victoria)
+* `ZZZ`: The branch location (e.g. "547" indicates the Westpac branch at 360 Collins Street) 
+
+So our implementation might look at follows:
+
+```csharp
+public record AustralianBankAccountNumber(AustralianBsb Bsb, string LocalAccountNumber);
+
+// Not shown here, but the constructor for AustralianBsb would have additional validation e.g. checking the state number is valid
+public record AustralianBsb(byte FinancialInstitution, byte State, short BranchLocation)
+{
+    private static readonly Regex Regex = new Regex("^(?<FinancialInstitution>[0-9]{2})(?<state>[0-9])[-](?<branchLocation>[0-9]{3})$");
+
+    public static bool TryParse(string value, out AustralianBsb? parsed)
+    {
+        var match = Regex.Match(value);
+        if (match.Success)
+        {
+            // These three statements should be safe as we've matched the regex
+            var financialInstitution = byte.Parse(match.Groups["FinancialInstitution"].Value);
+            var state = byte.Parse(match.Groups["state"].Value);
+            var branchLocation = short.Parse(match.Groups["branchLocation"].Value);
+
+            try
+            {
+                // The constructor might perform further checking - at time of writing there are only 6 states in Australia
+                // so presumably there are some invalid state values (0, 1, 8, 9)?
+                parsed = new AustralianBsb(financialInstitution, state, branchLocation);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                parsed = null;
+                return false;
+            }
+        }
+
+        parsed = null;
+        return false;
+    }
+}
+
+public class CallingCode
+{
+    public void UsingBsb()
+    {
+        var success = AustralianBsb.TryParse("033-547", out var bsb);
+        Console.Out.WriteLine($"The BSB has state: {bsb!.State}");
+    }
+}
+```
+
+The main benefit of this is that no-matter where we are in the codebase, if we have a `AustralianBsb` instance (rather than a `string`) then we **know** that it is valid and conforms to the domain rules. We should therefore try to parse data as soon as it enters our application (at the boundary) - adhering to the [fail-fast principal](https://www.martinfowler.com/ieeeSoftware/failFast.pdf).
 
 #### The problem with (unchecked) exceptions
 
@@ -651,25 +771,11 @@ public class ValidationExample
 }
 ```
 
-## Further reading
+## Resources / Further reading
 
-Reference https://github.com/louthy/language-ext 
-
-> This library uses and abuses the features of C# to provide a functional-programming 'base class library' that, if you squint, can look like extensions to the language itself. The desire here is to make programming in C# much more reliable and to make the engineer's inertia flow in the direction of declarative and functional code rather than imperative
-
-And also https://github.com/emmanueltouzery/prelude-ts 
-
-> prelude-ts (previously prelude.ts) is a TypeScript library which aims to make functional programming concepts accessible and productive in TypeScript. It provides persistent immutable collections (Vector, Set, Map, Stream), and constructs such as Option, Either, Predicate and Future. 
-
-Other articles / posts: 
-
-https://www.manning.com/books/functional-programming-in-c-sharp (Functional Programming in C#: How to write better C# code)
-
-https://github.com/hemanth/functional-programming-jargon
-
-https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
-https://cscalfani.medium.com/why-is-learning-functional-programming-so-damned-hard-bfd00202a7d1
-https://mikhail.io/2018/07/monads-explained-in-csharp-again/
-https://buttondown.email/hillelwayne/archive/making-illegal-states-unrepresentable/
-https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
-https://www.youtube.com/watch?v=NZ3-fsPIiYM
+* [language-ext](https://github.com/louthy/language-ext) (C# library adding various functional features)
+* [Functional Programming in C#](https://www.manning.com/books/functional-programming-in-c-sharp)
+* [Functional Programming Jargon (Github)](https://github.com/hemanth/functional-programming-jargon) (Glossary of FP terms)
+* [The Not-So-Scary Guide to Functional Programming](https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/)
+* [Monads explained in C# (again)](https://mikhail.io/2018/07/monads-explained-in-csharp-again/) Brief explanation of the Monad (theoretical view of Either and Option)
+* [How functional programming can improve testing, reuse, & maintenance in your current codebase](https://www.youtube.com/watch?v=NZ3-fsPIiYM) (Goes further into distinguishing actions from calculations, from the book "Grokking Simplicity")
