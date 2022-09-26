@@ -588,7 +588,7 @@ For more information on how to use the Either type, see the excellent "railway o
 
 If you're looking to use `Option` & `Either` in your C# code, consider using the library [language-ext](https://github.com/louthy/language-ext) which offers fully fleshed-out implementations.
 
-You might have observed that both `Option` and `Either` offer safety through inversion of control (in Hollywood "don't call us, we'll call you") - instead of reaching inside to get the value/result, you provide code to consume the value inside (if present). This concept (accepting a function as an argument) is an example of a higher-order function (HoF) - which leads on to the final section.
+You might have observed that both `Option` and `Either` offer safety through inversion of control (the "Hollywood" principal - "don't call us, we'll call you") - instead of reaching inside to get the value/result, you provide code to consume the value inside (if present). This concept (accepting a function as an argument) is an example of a higher-order function (HoF) - which leads on to the final section.
 
 [^4]: Sum types are named due to how the "value space" grows as we add possibilities. If we have a sum type that is _either_ a boolean _or_ a byte i.e. `Boolean | Byte`, there are 2 (true/false) + 256 (0, 1..255) = 258 possible values. By contrast, a "product type" that combines a boolean with a byte has 2 (true/false) * 256 = 512 possible values.
 
@@ -602,28 +602,54 @@ There is a symmetry in the functional-programming world - we have functions that
 * Accept other functions (not just primitive values) as parameters
 * Return a function (rather than a primitive value)
 
-Such functions are known as _Higher order Functions_ (HoFs). HoFs are the primary means for code reuse in functional programming.
+Such functions are known as _Higher order Functions_ (HoFs). HoFs are one of the primary means for code reuse in functional programming.
 
-For the C# programmers out there, an every-day example of a HoF can be found in LINQ:
+In the previous section we saw that `Either` and `Option` were able to offer safety through inversion of control (the "Hollywood" principal - "don't call us, we'll call you") - instead of reaching inside to get the value/result, you (the caller) provide code (a function) to consume the value inside (if present). Because `Map` and `Bind` take a function as an argument, `Map` and `Bind` are both examples of higher-order functions. 
+
+And here's an example of a higher order function where we create a function from some data:
 
 ```csharp
-var numbers = Enumerable.Range(1, 10);
+public record ValidationRule(string FruitName, string InvalidReason);
 
-// Create a function with the signature string → bool
-// (i.e. takes a single string argument and produces a boolean return value)
-Func<int, bool> isEven = theNumber => theNumber % 2 == 0;
+public class ValidationExample
+{
+    // Imagine these were loaded in e.g. from a database. Also imagine the rule definitions support some additional
+    // complexity e.g. they could include an operator name (GREATER_THAN, LESS_THAN, CONTAINS)
+    private static readonly ValidationRule[] ValidationRules = new[]
+    {
+        new ValidationRule("pineapple", "Too Prickly"),
+        new ValidationRule("potato", "Not a fruit"),
+    };
 
-// Invoke the LINQ Where method, passing the function in as an argument (the predicate)
-var evenNumbers = numbers.Where(isEven);
+    public void ConsumingCode()
+    {
+        var fruitToCheck = "pineapple";
+        
+        // Create a validator from one of the validation rules. In reality, we might map (iterate) over the collection
+        // of validation rules to create a list of validators.
+        // We could then apply them sequentially to produce a list of failure reasons        
+        Func<string, string?> validator = CreateFruitNameValidator(ValidationRules[0]);
+        
+        // Call our validator function
+        var invalidReason = validator(fruitToCheck);
+
+        if (invalidReason != null)
+        {
+            Console.Out.WriteLine($"Fruit {fruitToCheck} is invalid because {invalidReason}");
+        }
+        else
+        {
+            Console.Out.WriteLine($"Fruit {fruitToCheck} is valid!");
+        }
+    }
+
+    // CreateValidator is a higher-ordered function because it *returns* a function
+    private Func<string, string?> CreateFruitNameValidator(ValidationRule validationRule)
+    {
+        return value => value.ToLower() == validationRule.FruitName ? validationRule.InvalidReason : null;
+    }
+}
 ```
-
-Because `Where` takes a function as an argument, it is a HoF.
-
-By allowing the caller to pass a predicate function (e.g. `isEven`) to the `Where` method, the designers of LINQ have enabled significant extensibility; rather than trying to anticipate the filtering operations that might be needed up-front, they allow the user to "plug in" the filtering strategy - c.f. the [StrategyPattern](https://en.wikipedia.org/wiki/Strategy_pattern).
-
-
-
-
 
 ## Further reading
 
