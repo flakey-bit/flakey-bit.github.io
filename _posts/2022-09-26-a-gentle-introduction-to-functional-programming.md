@@ -42,7 +42,7 @@ The program as a whole can be viewed as an object [graph](https://en.wikipedia.o
 
 A request/message comes in from the outside world (button click, HTTP request, stdin...), the root object calls methods[^1] on _it's_ objects (which in turn call methods) - and thus the program springs to life. 
 
-By way of contrast, "proper" functional-programming languages don't use
+By way of contrast, functional-programming languages don't use
 * Classes
 * Objects
 * Methods
@@ -98,7 +98,6 @@ In functional programming, the same outcomes are achieved through _different_ me
 * Algebraic Data Types ("leaning on the type system")
 * Immutability
 * Pure-functions / isolation of side effects
-* Typeclasses
 
 some of these ideas are explored in the remainder of the post.
 
@@ -117,7 +116,7 @@ As an example, imagine some software that deals with lists of people (perhaps a 
 When programming in an object-oriented (OO) or mixed paradigm (part OO, part FP) style, it is possible to make a class immutable although it takes some care/rigour to do so:
 * The class should not expose any property setters or public fields
 * Any mutating operations (methods) should return a **new** instance ([copy constructors](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/how-to-write-a-copy-constructor) come in handy)
-* Take not to reuse collections when mutating
+* Take care not to reuse collections when mutating
 * Ideally, all dependencies of the class (constructor arguments) should be immutable also (transitively) 
 
 C# [records](https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/types/records) make writing immutable types substantially easier
@@ -164,7 +163,7 @@ Main()
 * ...
 * therefore the whole call stack (right the way to `Main()`) is impure
 
-In "proper" functional programming languages (like Haskell), all functions are pure by default (i.e. unless explicitly stated otherwise).
+In functional programming languages (like Haskell), all functions are pure by default (i.e. unless explicitly stated otherwise).
 
 #### Advantages of pure functions
 * They're super easy to test because you can treat them as a black-box
@@ -202,7 +201,7 @@ But as it turns out, side-effects (at least I/O) are a necessary evil. Real prog
 * Write output to the disk / screen
 * Communicate with another program or system (network, pipe etc)
 
-Again, in "proper" functional programming languages, [the compiler prevents us from performing I/O unless we're in a special context](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/IO) (IO Monad) - similar to how the `await` keyword can't be used unless you're already in an `async` method in C#. 
+Again, in functional programming languages, [the compiler prevents us from performing I/O unless we're in a special context](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/IO) (IO Monad) - similar to how the `await` keyword can't be used unless you're already in an `async` method in C#. 
 
 Unlike Haskell, in C# the compiler can't prevent us from performing I/O in arbitrary code, so the best we can hope for is a "Gentleman's Agreement" (with the other developers on our team) around when and where to perform I/O.
 
