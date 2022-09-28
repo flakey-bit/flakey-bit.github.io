@@ -281,7 +281,7 @@ Many proponents of TDD claim it is superior because it yields better (software) 
 
 Regardless of whether you follow TDD or not, as a typical object-oriented software developer, a successful compilation (step #2 above) **doesn't give you very high confidence** that your program works correctly, or that it does so for all inputs & edge-cases. You need to write a bunch of tests (and have those tests pass) before having any semblance of confidence. 
 
-The eutopia that functional-programmers strive for is "If my program compiles, it's probably correct" - I refer to this as "leaning on the type system". Does that mean functional programmers don't write tests? Of course not. But I'd argue they write _fewer_ tests - as an object-oriented programmer many of your tests will fall into the category of 
+The utopia that functional-programmers strive for is "If my program compiles, it's probably correct" - I refer to this as "leaning on the type system". Does that mean functional programmers don't write tests? Of course not. But I'd argue they write _fewer_ tests - as an object-oriented programmer many of your tests will fall into the category of 
 * Ensure all edge-cases are handled &
 * Ensure invalid states are prevented (e.g. "an order can't be out for delivery if it's waiting on an item to arrive in the warehouse")
 
