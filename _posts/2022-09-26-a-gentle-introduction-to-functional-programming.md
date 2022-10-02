@@ -76,7 +76,7 @@ Code written in a functional style often treats functions as data too - think al
 represents `2 * (4 + 8)` - the functions `sum` and `mult` have been included _alongside_ the operands (numbers).
 
 Things to note:
-* Languages that allow functions to be passed around like this (treated as data) are said to have "first-class functions". A language with first-class functions is basically a a pre-requisite for functional programming. Fortunately, C# has first-class functions with `delegate` / `func` / `action` etc
+* Languages that allow functions to be passed around like this (treated as data) are said to have "first-class functions". A language with first-class functions is basically a pre-requisite for functional programming. Fortunately, C# has first-class functions with `delegate` / `func` / `action` etc
 * A function that _takes_ other functions as data or _returns_ a function as its result is known as a Higher-order Function (HoF)
 
 [^1]: The original proponents of object-oriented programming [didn't really intend for it to work like this](http://lists.squeakfoundation.org/pipermail/squeak-dev/1998-October/017019.html) - it was supposed to be about actors sending messages - closer to how actor-based models like [Akka.NET](https://github.com/akkadotnet) work.
@@ -215,7 +215,7 @@ There's a great blog-post [clean and green](http://drocco007.github.io/2015_pytn
 
 The idea is that the *majority* of the application (_especially_ the complex business logic - the "core") is written in a functional style while the edges / interface to the outside world (the "ports") are written in an object-oriented or imperative style - keeping us in functional land as much as possible.
 
-I've also previously [blogged](2019/10/17/writing-testable-software/) about a similar idea which I call the "execution plan pattern" - the idea is to split figuring out "what needs to be done" from actually doing it - the code to _generate_ the "plan" (from data) is functionally pure (and possibly complex), but the _execution_ of the plan is impure (but simple). 
+I've also previously [blogged](/2019/10/17/writing-testable-software/) about a similar idea which I call the "execution plan pattern" - the idea is to split figuring out "what needs to be done" from actually doing it - the code to _generate_ the "plan" (from data) is functionally pure (and possibly complex), but the _execution_ of the plan is impure (but simple). 
 
 Another way to think about it is that your "functional core" produces a list of action _descriptions_ (side effects) to execute. Those actions are finally executed near the entrypoint to your program. The code that finally executes the side-effects or I/O should have very low [cyclomatic complexity](https://www.geeksforgeeks.org/cyclomatic-complexity/) - in other words, avoid branching (`if`/`else`) and looping in that code.
 
@@ -520,7 +520,7 @@ We can then write a function that takes a shape and calculates the surface area:
   * If a new type `Triangle` is added to the union, our code won't compile until we handle the triangle case
 * The compiler ensures we can only use the data that pertains to the type in question - e.g. if we're handling the square case, we're unable to access the "radius"
 
-Unfortunately, C# doesn't have discriminated unions yet (although there is a [proposal]((https://github.com/dotnet/csharplang/blob/main/proposals/discriminated-unions.md)) to add them). For now, there's a great library called [OneOf](https://github.com/mcintyre321/OneOf) that uses source generators to add F# style unions to C# without too much boilerplate.
+Unfortunately, C# doesn't have discriminated unions yet (although there is a [proposal](https://github.com/dotnet/csharplang/blob/main/proposals/discriminated-unions.md) to add them). For now, there's a great library called [OneOf](https://github.com/mcintyre321/OneOf) that uses source generators to add F# style unions to C# without too much boilerplate.
 
 Here's an example showing OneOf in action:
 
