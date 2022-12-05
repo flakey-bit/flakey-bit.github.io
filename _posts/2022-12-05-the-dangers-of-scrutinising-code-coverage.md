@@ -10,28 +10,28 @@ categories:
   - Uncategorized
 ---
 
-The dangers of scrutinising code-coverage
-
 ## Introduction
 
 Recently, a proposal was put forward at my organisation that 
 * All teams **must** report on code (line/branch) coverage in SPAs (web applications) we build
 * Teams (ideally) **should** set a coverage threshold level and fail builds when it drops below the threshold.
 
-Here are my thoughts on why this (surprisingly common) idea is a misguided one.
+Here are my thoughts on why this (surprisingly common) idea is a misguided one. 
+
+**TL;DR**: Successful teams focus on high value tests 🏆. Asking teams to report on code-coverage is likely to result in low (even negative!) value tests being written 📉.      
 
 ## Common misconception:
-"The more automated tests in the codebase, the better".
+> "The more automated tests in the codebase, the better".
 
-Actually, every test has a (not insignificant) maintenance cost associated with it. If a test isn't providing value (whether that value is 
-* enabling safe refactoring
-* preventing regressions or 
-* documenting correct usage
+Actually, every test has a (not insignificant) maintenance cost associated with it. **If a test isn't providing value it should be removed**. 
 
-) it should be removed.
+Generally speaking, there are three ways a test can provide value 
+1. It enables safe refactoring
+2. It prevents regressions 
+3. It documents correct/example usage
 
 ## Can tests be harmful?
-While it won't set your dog on fire, a test with negligible or zero value is harmful in the sense that you still pay the maintenance (and initial build) cost associated with that test. 
+While it won't set your dog on fire, a test with negligible or zero value is harmful in the sense that you still pay the maintenance (and initial development) cost associated with that test. 
 Such a test has a **net negative value**. Net negative tests slow your team down.
 
 Tests that check implementation details are _particularly_ susceptible to this - every time the implementation changes, a corresponding (mirroring!) change must be made to the tests.
@@ -67,15 +67,39 @@ This blog post goes into some more detail: [Kent C Dodds: Common testing mistake
 
 ## What are the problems with asking teams to report on code-coverage?
 
-* For some teams there may be technical challenges associated with generating the a (consolidated) report (e.g. different test frameworks used for different parts of the application)
-  * From the outside in it's impossible to see the nuances that might be at play here
-* A single coverage % number doesn't take into consideration the app in question (which parts are important to cover). 
-  * A single number doesn't tell you whether it's the important parts that have been covered or the trivial / unimportant parts
-* It can very easily lead teams into a false sense of security - "We're at 100% branch coverage, so we're good"
-  * If the assertions are non-existent or rubbish, you might as well have 0% coverage
-* See Goodhart's law: "When a measure becomes a target, it ceases to be a good measure" 🎯
-  * Simply by asking teams to report on the coverage %, undue focus will be put on increasing the coverage % - to the detriment of other aspects.
-* Once you accrue a lot of negative-value tests, teams will start to de-value test failures (broken window syndrome 💔)
-* Often, it's difficult to maintain a high coverage percentage without resorting to testing **implementation details** (and/or tests that simply don't reflect real-world usage). 
-  * This is the most concerning aspect of the proposal - Goodhart's law tells us that teams **will** write these negative-value tests (due to the implicit target) 
-  * As noted above, such tests **slow teams down** and **create barriers to refactoring** (bad)
+### Unjustified technical cost
+As mentioned above, code coverage can be a useful tool for a developer to look at when deciding whether they have written the right tests. 
+However, for some teams there could be significant technical challenges in automating the generation of the coverage report.
+
+If the team in question doesn't care about the coverage number, we've effectively foisted a bunch of toil on that team for no gain
+
+### A single number misleading
+A single coverage % number doesn't take into consideration the app in question (which parts are important to cover). If we're at 50% coverage is that 100% of the important business critical-code and 0% of the boring infrastructure, or the other way around?
+
+### False sense of security
+Code coverage numbers can easily lull teams into a false sense of security - "We're at 100% branch coverage, so we're good"
+
+If your assertions are non-existent or rubbish, you might as well have 0% coverage
+
+### Goodhart's law 🎯
+Goodhart's law says that "When a measure becomes a target, it ceases to be a good measure". 
+
+Simply by asking teams to report on the coverage %, undue focus will be put on increasing the coverage % - to the detriment of other aspects.
+
+### Negative value tests
+Once you accrue a lot of negative-value tests, **teams will start to de-value test failures** (this is known as the broken-window syndrome 💔).
+
+It spells bad news - we want to be in a place where a failing test means something has been broken badly and we've dodged a bullet 🔫. Don't let your tests cry wolf! 
+
+### Encourages testing implementation details
+
+Often, it's difficult to maintain a high coverage percentage without resorting to testing **implementation details** (and/or tests that simply don't reflect real-world usage). 
+
+In my opinion this is the most dangerous 💀 (but also invisible) second-order effect from asking teams to report on code coverage. 
+Goodhart's law tells us that teams **will** write these negative-value tests (due to the implicit target). As noted elsewhere, these negative-value tests **slow teams down** and **create barriers to refactoring** (bad).
+
+## Conclusion
+
+Code coverage is a useful tool, but we should take care when mandating reporting around it. 
+
+> It doesn't make sense to hire smart people and then tell them what to do; we hire smart people so they can tell us what to do - Steve Jobs
