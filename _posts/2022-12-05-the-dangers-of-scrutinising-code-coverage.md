@@ -14,7 +14,7 @@ It turns out that not all tests are good
 
 ## Introduction
 
-Recently, a proposal was put forward at my organisation that 
+Recently, I heard a proposal at a software company: 
 * All teams **must** report on code (line/branch) coverage in SPAs (web applications) we build
 * Teams (ideally) **should** set a coverage threshold level and fail builds when it drops below the threshold.
 
@@ -106,3 +106,14 @@ Goodhart's law tells us that teams **will** write these negative-value tests (du
 Code coverage is a useful tool, but we should take care when mandating reporting around it. 
 
 > It doesn't make sense to hire smart people and then tell them what to do; we hire smart people so they can tell us what to do - Steve Jobs
+
+Requiring teams to report on code-coverage might _seem_ like a silver bullet, but hopefully now you can see that it is not.
+
+Unfortunately, I don't have a panacea to offer 😔, but I'd suggest teams prioritise testing code
+* That changes frequently
+* Where defects have been cropping up frequently
+* With high [cyclomatic complexity](https://www.geeksforgeeks.org/cyclomatic-complexity/)
+* Where a defect could have dire consequences
+
+And in terms of writing tests, prefer tests that **check observable results/outputs** as opposed to tests that check state mutations or worse, interaction with private implementation details.
+> The more your tests resemble the way your software is used, the more confidence they can give you. - Kent C Dodds
