@@ -10,6 +10,8 @@ categories:
   - Uncategorized
 ---
 
+It turns out that not all tests are good
+
 ## Introduction
 
 Recently, a proposal was put forward at my organisation that 
@@ -58,8 +60,9 @@ However, the fact that an automated test has hit a line/branch does not give any
 
 In fact, it doesn't even ensure the line/branch executed without throwing an exception!
 
-I will concede that (_generally speaking_) if the important use-cases (see "What do valuable tests exercise") are tested AND the SUT code does not contain redundant logic, the line/branch coverage should be fairly high. 
-Also, examining the coverage can **certainly** be a useful tool 🔨 in the belt of the developer "These lines aren't being hit at all - Oops!, I've forgotten to write tests covering use-case x"
+I will concede that (_generally speaking_) **if** the important use-cases are tested (see "What do valuable tests exercise") **and** the production code does not contain redundant logic, then the line/branch coverage _should_ be fairly high.
+
+Examining the coverage certainly **can** be a useful tool 🔨 in the belt of the developer: "These lines aren't being hit at all - Oops!, I've forgotten to write tests covering use-case x"
 
 This blog post goes into some more detail: [Kent C Dodds: Common testing mistakes: 100% code coverage](https://kentcdodds.com/blog/common-testing-mistakes#mistake-number-2-100-codecoverage) 
 
@@ -73,7 +76,7 @@ However, for some teams there could be significant technical challenges in autom
 
 If the team in question doesn't care about the coverage number, we've effectively foisted a bunch of toil on that team for no gain
 
-### A single number misleading
+### A single number is misleading
 A single coverage % number doesn't take into consideration the app in question (which parts are important to cover). If we're at 50% coverage is that 100% of the important business critical-code and 0% of the boring infrastructure, or the other way around?
 
 ### False sense of security
