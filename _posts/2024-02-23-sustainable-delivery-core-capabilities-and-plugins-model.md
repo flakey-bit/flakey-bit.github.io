@@ -60,8 +60,8 @@ export const render = (company) => {
 the behaviour is tied directly to specific data cases (`MSFT`, `NVDA`, `ACME`). 
 
 This kind of code **scales poorly** (from a maintenance perspective):
-* Adding or removing a customer typically requires a code change
-* It's easy to end up with dead (unreachable code)
+* Adding or removing a company typically requires a code change
+* It's easy to end up with dead (unreachable) code
 
 In a nutshell, the problem is that we're treating each company as a "pet" - we should be treating them collectively as "cattle" - there should be no special-snowflakes ❄️
 
